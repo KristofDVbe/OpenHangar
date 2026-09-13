@@ -38,6 +38,14 @@ from flights.crew_invites import (  # pyright: ignore[reportMissingImports]
 from flights.crew_removal import (  # pyright: ignore[reportMissingImports]
     remove_flight_for_user,
 )
+from flights.shared_flight import (  # pyright: ignore[reportMissingImports]
+    can_edit_shared,
+    notify_shared_changes,
+    pending_suggestions_to_review,
+    protect_other_pilots,
+    restore_other_pilots,
+    shared_snapshot,
+)
 from models import (  # pyright: ignore[reportMissingImports]
     Aircraft,
     CrewRole,
@@ -61,6 +69,7 @@ from models import (  # pyright: ignore[reportMissingImports]
 )
 from sqlalchemy import func  # pyright: ignore[reportMissingImports]
 from utils import (  # pyright: ignore[reportMissingImports]
+    current_user_role,
     login_required,
     require_pilot_access,
     tenant_pilot_names,
@@ -922,6 +931,7 @@ def logbook() -> ResponseReturnValue:
         LogbookEntryType=LogbookEntryType,
         minimums_breaches=minimums_breaches,
         crew_invites=pending_invites_for_user(uid),
+        flight_corrections=pending_suggestions_to_review(uid),
         crew_roles=CrewRole,
     )
 
@@ -1057,6 +1067,11 @@ def edit_entry(entry_id: int) -> ResponseReturnValue:
     if entry.aircraft_id:
         return redirect(url_for("flights.edit_flight", flight_id=entry.id))
 
+    # Confirmed on someone else's flight: only their own part is editable
+    # (flights/shared_flight.py).
+    if not can_edit_shared(entry, uid, current_user_role()):
+        return redirect(url_for("flights.crew_entry", flight_id=entry.id))
+
     if request.method == "POST":
         values, errors = parse_pilot_fields(request.form)
         if errors:
@@ -1072,9 +1087,13 @@ def edit_entry(entry_id: int) -> ResponseReturnValue:
                 FstdType=FstdType,
                 crew_name_suggestions=_crew_name_suggestions(uid),
             ), 422
+        shared_before = shared_snapshot(entry)
+        other_pilots = protect_other_pilots(entry, uid)
         apply_pilot_fields(entry, values)
+        restore_other_pilots(entry, other_pilots)
         _apply_gps_to_pilot_entry(entry)
         db.session.commit()
+        notify_shared_changes(entry, uid, shared_before)
         flash(_("Logbook entry updated."), "success")
         return redirect(url_for("pilots.logbook"))
 

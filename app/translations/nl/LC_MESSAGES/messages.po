@@ -11772,3 +11772,207 @@ msgid "One flight stays in a pilot's logbook as a flight on another aircraft; it
 msgid_plural "%(num)d flights stay in pilots' logbooks as flights on another aircraft; they were only removed from this aircraft's log."
 msgstr[0] "Eén vlucht blijft in het logboek van een piloot staan als vlucht met een ander vliegtuig; ze is alleen uit het logboek van dit vliegtuig verwijderd."
 msgstr[1] "%(num)d vluchten blijven in de logboeken van piloten staan als vluchten met een ander vliegtuig; ze zijn alleen uit het logboek van dit vliegtuig verwijderd."
+
+#: app/flights/crew_invites.py
+msgid "%(name)s confirmed your flight"
+msgstr "%(name)s heeft uw vlucht bevestigd"
+
+#: app/flights/crew_invites.py
+msgid "%(name)s confirmed the flight %(route)s on %(date)s; it is now in their pilot logbook too."
+msgstr "%(name)s heeft de vlucht %(route)s van %(date)s bevestigd; ze staat nu ook in het eigen pilotenlogboek."
+
+#: app/flights/crew_invites.py
+msgid "%(name)s declined your flight"
+msgstr "%(name)s heeft uw vlucht geweigerd"
+
+#: app/flights/crew_invites.py
+msgid "%(name)s declined the flight %(route)s on %(date)s; their name stays on your entry without a link to their logbook."
+msgstr "%(name)s heeft de vlucht %(route)s van %(date)s geweigerd; de naam blijft op uw vlucht staan, zonder koppeling met het eigen logboek."
+
+#: app/flights/routes.py
+msgid "Your part of this flight was saved."
+msgstr "Uw deel van deze vlucht is opgeslagen."
+
+#: app/flights/routes.py
+msgid "Nothing to suggest — the values are unchanged."
+msgstr "Niets voor te stellen — de waarden zijn ongewijzigd."
+
+#: app/flights/routes.py
+msgid "Correction sent. It is applied once the pilot who logged this flight accepts it."
+msgstr "Correctie verzonden. Ze wordt toegepast zodra de piloot die deze vlucht logde ze aanvaardt."
+
+#: app/flights/routes.py
+msgid "This correction has already been handled."
+msgstr "Deze correctie is al behandeld."
+
+#: app/flights/routes.py
+msgid "Correction applied to the flight."
+msgstr "Correctie toegepast op de vlucht."
+
+#: app/flights/routes.py
+msgid "Correction rejected."
+msgstr "Correctie geweigerd."
+
+#: app/flights/routes.py
+msgid "That crew position is already confirmed by %(name)s — pick your own role on this flight."
+msgstr "Die bemanningsplaats is al bevestigd door %(name)s — kies uw eigen rol op deze vlucht."
+
+#: app/flights/shared_flight.py
+msgid "Takeoff time"
+msgstr "Opstijgtijd"
+
+#: app/flights/shared_flight.py
+msgid "Landing time"
+msgstr "Landingstijd"
+
+#: app/flights/shared_flight.py
+msgid "Function time"
+msgstr "Functietijd"
+
+#: app/flights/shared_flight.py
+msgid "Please choose your role on this flight."
+msgstr "Kies uw rol op deze vlucht."
+
+#: app/flights/shared_flight.py
+msgid "Your flight on %(date)s was updated"
+msgstr "Uw vlucht van %(date)s is gewijzigd"
+
+#: app/flights/shared_flight.py
+msgid "%(name)s updated a flight you're on"
+msgstr "%(name)s heeft een vlucht gewijzigd waarop u meevloog"
+
+#: app/flights/shared_flight.py
+msgid "These details of your flight %(route)s on %(date)s changed:"
+msgstr "Deze gegevens van uw vlucht %(route)s van %(date)s zijn gewijzigd:"
+
+#: app/flights/shared_flight.py
+msgid "Correction suggested for your flight on %(date)s"
+msgstr "Correctie voorgesteld voor uw vlucht van %(date)s"
+
+#: app/flights/shared_flight.py
+msgid "%(name)s suggests a correction"
+msgstr "%(name)s stelt een correctie voor"
+
+#: app/flights/shared_flight.py
+msgid "%(name)s suggests changing your flight %(route)s on %(date)s. Accept to apply it for both of you, or reject it."
+msgstr "%(name)s stelt voor om uw vlucht %(route)s van %(date)s te wijzigen. Aanvaard om het voor u beiden toe te passen, of weiger."
+
+#: app/flights/shared_flight.py
+msgid "Correction not applied to your flight on %(date)s"
+msgstr "Correctie niet toegepast op uw vlucht van %(date)s"
+
+#: app/flights/shared_flight.py
+msgid "%(name)s rejected your correction"
+msgstr "%(name)s heeft uw correctie geweigerd"
+
+#: app/flights/shared_flight.py
+msgid "Your suggested correction for the flight %(route)s on %(date)s was not applied."
+msgstr "De correctie die u voorstelde voor de vlucht %(route)s van %(date)s is niet toegepast."
+
+#: app/offline/routes.py
+msgid "Another pilot logged this flight, so only they can change its details. Open the flight online to suggest a correction."
+msgstr "Een andere piloot heeft deze vlucht gelogd, dus alleen die kan de gegevens wijzigen. Open de vlucht online om een correctie voor te stellen."
+
+#: app/templates/config/notifications.html
+msgid "Flight crew confirmation answered"
+msgstr "Antwoord op verzoek om bemanning te bevestigen"
+
+#: app/templates/config/notifications.html
+msgid "Shared flight changed"
+msgstr "Gedeelde vlucht gewijzigd"
+
+#: app/templates/config/notifications.html
+msgid "Flight correction suggestions"
+msgstr "Voorgestelde vluchtcorrecties"
+
+#: app/templates/config/notifications.html
+msgid "A pilot you named on a flight confirmed or declined it."
+msgstr "Een piloot die u op een vlucht vermeldde, heeft die bevestigd of geweigerd."
+
+#: app/templates/config/notifications.html
+msgid "The pilot who logged a flight you are on changed its shared details."
+msgstr "De piloot die een vlucht logde waarop u meevloog, heeft de gedeelde gegevens gewijzigd."
+
+#: app/templates/config/notifications.html
+msgid "A pilot on your flight suggests a correction, or your own suggestion was not applied."
+msgstr "Een piloot op uw vlucht stelt een correctie voor, of uw eigen voorstel is niet toegepast."
+
+#: app/templates/flights/crew_entry.html
+msgid "My part of this flight"
+msgstr "Mijn deel van deze vlucht"
+
+#: app/templates/flights/crew_entry.html
+msgid "Edit flight details"
+msgstr "Vluchtgegevens bewerken"
+
+#: app/templates/flights/crew_entry.html
+msgid "Back to flight"
+msgstr "Terug naar de vlucht"
+
+#: app/templates/flights/crew_entry.html
+msgid "%(name)s logged this flight, so its details are shared with them. You can change your own name, role, function time and remark here; for anything else, suggest a correction below."
+msgstr "%(name)s heeft deze vlucht gelogd, dus de gegevens worden met die piloot gedeeld. Hier wijzigt u uw eigen naam, rol, functietijd en opmerking; stel voor al het andere hieronder een correctie voor."
+
+#: app/templates/flights/crew_entry.html
+msgid "Only for you"
+msgstr "Alleen voor u"
+
+#: app/templates/flights/crew_entry.html
+msgid "Your name on this flight"
+msgstr "Uw naam op deze vlucht"
+
+#: app/templates/flights/crew_entry.html
+msgid "Your function time (hours)"
+msgstr "Uw functietijd (uren)"
+
+#: app/templates/flights/crew_entry.html
+msgid "Your personal remark"
+msgstr "Uw persoonlijke opmerking"
+
+#: app/templates/flights/crew_entry.html
+msgid "Save my part"
+msgstr "Mijn deel opslaan"
+
+#: app/templates/flights/crew_entry.html
+msgid "Your corrections waiting for review"
+msgstr "Uw correcties die op beoordeling wachten"
+
+#: app/templates/flights/crew_entry.html
+msgid "Suggest a correction"
+msgstr "Correctie voorstellen"
+
+#: app/templates/flights/crew_entry.html
+msgid "Change what is wrong and send it. Nothing changes until %(name)s accepts it; then it applies for both of you."
+msgstr "Pas aan wat niet klopt en verzend het. Er verandert niets tot %(name)s het aanvaardt; daarna geldt het voor u beiden."
+
+#: app/templates/flights/crew_entry.html
+msgid "Send correction"
+msgstr "Correctie verzenden"
+
+#: app/templates/flights/flight_form.html
+msgid "Confirmed by %(name)s — only they can change their name and role."
+msgstr "Bevestigd door %(name)s — alleen die piloot kan de eigen naam en rol wijzigen."
+
+#: app/templates/partials/_flight_corrections.html
+msgid "Suggested corrections to your flights"
+msgstr "Voorgestelde correcties op uw vluchten"
+
+#: app/templates/partials/_flight_corrections.html
+msgid "A pilot on these flights suggests changing shared details. Accepting applies the change for both of you."
+msgstr "Een piloot op deze vluchten stelt voor gedeelde gegevens te wijzigen. Aanvaarden past de wijziging toe voor u beiden."
+
+#: app/templates/partials/_flight_corrections.html
+msgid "Suggested by"
+msgstr "Voorgesteld door"
+
+#: app/templates/partials/_flight_corrections.html
+msgid "Changes"
+msgstr "Wijzigingen"
+
+#: app/templates/partials/_flight_corrections.html
+msgid "Accept"
+msgstr "Aanvaarden"
+
+#: app/templates/partials/_flight_corrections.html
+msgid "Reject"
+msgstr "Weigeren"
