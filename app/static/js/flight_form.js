@@ -61,6 +61,11 @@
           if (crewName1 && !crewName1.value) crewName1.value = pilotNameHint;
           if (crewRole1) crewRole1.value = 'STUDENT';
         }
+        // Programmatic value changes fire no events: let the crew-invite
+        // hint below re-evaluate both names.
+        [crewName0, crewName1].forEach(function (el) {
+          if (el) el.dispatchEvent(new Event('change'));
+        });
       }
       document.querySelectorAll('input[name="pilot_role"]').forEach(function (r) { r.addEventListener('change', applyRoleHint); });
     }

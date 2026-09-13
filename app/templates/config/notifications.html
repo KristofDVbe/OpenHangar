@@ -46,6 +46,9 @@
     {% elif t == 'reservation_aircraft_grounded' %}{{ _('Aircraft grounded (upcoming reservation)') }}
     {% elif t == 'personal_minimums_recency' %}{{ _('Personal minimums recency reminder') }}
     {% elif t == 'crew_invite' %}{{ _('Flight crew confirmation request') }}
+    {% elif t == 'crew_invite_answered' %}{{ _('Flight crew confirmation answered') }}
+    {% elif t == 'shared_flight_changed' %}{{ _('Shared flight changed') }}
+    {% elif t == 'flight_correction' %}{{ _('Flight correction suggestions') }}
     {% else %}{{ t }}{% endif %}
   {% endmacro %}
 
@@ -69,6 +72,9 @@
     {% elif t == 'reservation_aircraft_grounded' %}{{ _('A grounding snag was opened on an aircraft you hold a confirmed reservation for.') }}
     {% elif t == 'personal_minimums_recency' %}{{ _('You have exceeded a comfort-zone recency threshold in your personal minimums (e.g. days since your last flight).') }}
     {% elif t == 'crew_invite' %}{{ _('Another pilot logged a flight with you on board and asks you to confirm it in your pilot logbook.') }}
+    {% elif t == 'crew_invite_answered' %}{{ _('A pilot you named on a flight confirmed or declined it.') }}
+    {% elif t == 'shared_flight_changed' %}{{ _('The pilot who logged a flight you are on changed its shared details.') }}
+    {% elif t == 'flight_correction' %}{{ _('A pilot on your flight suggests a correction, or your own suggestion was not applied.') }}
     {% else %}{{ t }}{% endif %}
   {% endmacro %}
 

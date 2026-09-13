@@ -171,6 +171,9 @@ ENDPOINT_TABLE: dict[str, set[str]] = {
     "flights.delete_flight": _PILOT_ACCESS_ROLES,
     "flights.accept_crew_invite": _PILOT_ACCESS_ROLES,  # plus invitee-only 404
     "flights.decline_crew_invite": _PILOT_ACCESS_ROLES,  # plus invitee-only 404
+    "flights.crew_entry": _PILOT_ACCESS_ROLES,  # plus linked-crew-only 404
+    "flights.accept_correction": _PILOT_ACCESS_ROLES,  # plus logger-only 404
+    "flights.reject_correction": _PILOT_ACCESS_ROLES,  # plus logger-only 404
     "flights.airframe_import_upload": _OWNER_ROLES,
     "flights.airframe_import_execute": _OWNER_ROLES,
     "flights.airframe_import_review_resolve": _OWNER_ROLES,

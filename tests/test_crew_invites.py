@@ -89,17 +89,20 @@ def _post_new_flight(client, **overrides):
 
 
 def _add_flight(app, *, pic_user_id=None, second_crew_user_id=None, **fields):
+    values = {
+        "date": date(2026, 9, 1),
+        "departure_icao": "EBAW",
+        "arrival_icao": "EBOS",
+        "other_aircraft_registration": "OO-TST",
+        "other_aircraft_type": "Cessna C172",
+        "flight_time": Decimal("1.5"),
+        **fields,
+    }
     with app.app_context():
         fe = Flight(
-            date=date(2026, 9, 1),
-            departure_icao="EBAW",
-            arrival_icao="EBOS",
-            other_aircraft_registration="OO-TST",
-            other_aircraft_type="Cessna C172",
-            flight_time=Decimal("1.5"),
             pic_user_id=pic_user_id,
             second_crew_user_id=second_crew_user_id,
-            **fields,
+            **values,
         )
         db.session.add(fe)
         db.session.commit()
