@@ -20,19 +20,21 @@ from models import Flight, db  # pyright: ignore[reportMissingImports]
 
 
 def unlink_user(fe: Flight, user_id: int | None) -> None:
-    """Clear *user_id*'s crew slot identity and that slot's own function
-    hours. The free-text name stays; the flight's shared figures are left
-    alone since the other pilot still depends on them."""
+    """Clear *user_id*'s crew slot identity, that slot's own function hours
+    and personal remark. The free-text name stays; the flight's shared
+    figures are left alone since the other pilot still depends on them."""
     if user_id is None:
         return
     if fe.pic_user_id == user_id:
         fe.pic_user_id = None
         fe.function_pic = None
+        fe.pic_remarks = None
     if fe.second_crew_user_id == user_id:
         fe.second_crew_user_id = None
         fe.function_dual = None
         fe.function_copilot = None
         fe.function_instructor = None
+        fe.second_crew_remarks = None
 
 
 def remove_flight_for_user(fe: Flight, user_id: int) -> bool:

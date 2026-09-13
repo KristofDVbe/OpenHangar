@@ -31,6 +31,10 @@ from models import (  # pyright: ignore[reportMissingImports]
 )
 from utils import tenant_pilots  # pyright: ignore[reportMissingImports]
 
+from flights.shared_flight import (  # pyright: ignore[reportMissingImports]
+    SECOND_CREW_FUNCTION_FIELD,
+)
+
 log = logging.getLogger(__name__)
 
 # Form field carrying the picked pilot's user id, per slot.
@@ -137,6 +141,11 @@ def sync_crew_invites(
         ).first()
         if already_declined:
             continue
+        # A flight logged before created_by was tracked: whoever names the
+        # crew becomes its logger, so the invited pilot can't edit its shared
+        # fields once they confirm (flights/shared_flight.py).
+        if fe.created_by_user_id is None:
+            fe.created_by_user_id = inviter_id
         invite = FlightCrewInvite(
             flight_id=fe.id,
             slot=slot,
@@ -168,15 +177,6 @@ def pending_invite_count(user_id: int) -> int:
     return count
 
 
-# Which function_* column holds the second-crew slot's own hours, per role.
-# A safety pilot has no dedicated EASA function column, so none is set.
-_SECOND_CREW_FUNCTION_FIELD: dict[str, str] = {
-    CrewRole.IP: "function_instructor",
-    CrewRole.COPILOT: "function_copilot",
-    CrewRole.STUDENT: "function_dual",
-}
-
-
 def accept_invite(invite: FlightCrewInvite, user: User) -> bool:
     """Write *user* into the invite's slot. Returns False (and cancels the
     invite) when the slot was meanwhile filled or the user already occupies
@@ -201,7 +201,8 @@ def accept_invite(invite: FlightCrewInvite, user: User) -> bool:
         fe.second_crew_user_id = user.id
         if not fe.second_crew_name:
             fe.second_crew_name = user.display_name
-        field = _SECOND_CREW_FUNCTION_FIELD.get(fe.second_crew_role or "")
+        # A safety pilot has no dedicated EASA function column, so none is set.
+        field = SECOND_CREW_FUNCTION_FIELD.get(fe.second_crew_role or "")
         if field and getattr(fe, field) is None:
             setattr(fe, field, fe.flight_time)
 
@@ -213,6 +214,51 @@ def accept_invite(invite: FlightCrewInvite, user: User) -> bool:
 def decline_invite(invite: FlightCrewInvite) -> None:
     invite.status = CrewInviteStatus.DECLINED
     invite.responded_at = datetime.now(UTC)
+
+
+def notify_invite_answered(invite: FlightCrewInvite, accepted: bool) -> None:
+    """Tell the pilot who sent the invite that it was confirmed or declined."""
+    if invite.invited_by_user_id is None:
+        return
+    from flask_babel import lazy_gettext as _l  # pyright: ignore[reportMissingImports]
+
+    from flights.shared_flight import (  # pyright: ignore[reportMissingImports]
+        dispatch_to_user,
+    )
+
+    fe = _invite_flight(invite)
+    answered_by = db.session.get(User, invite.invited_user_id)
+    name = answered_by.display_name if answered_by else "—"
+    route = f"{fe.departure_icao or '?'} → {fe.arrival_icao or '?'}"
+    if accepted:
+        title = _l("%(name)s confirmed your flight")
+        message = _l(
+            "%(name)s confirmed the flight %(route)s on %(date)s; it is now in "
+            "their pilot logbook too."
+        )
+    else:
+        title = _l("%(name)s declined your flight")
+        message = _l(
+            "%(name)s declined the flight %(route)s on %(date)s; their name stays "
+            "on your entry without a link to their logbook."
+        )
+    dispatch_to_user(
+        invite.invited_by_user_id,
+        NotificationType.CREW_INVITE_ANSWERED,
+        {
+            "subject_key": title,
+            "subject_args": {"name": name},
+            "notification_title_key": title,
+            "notification_title_args": {"name": name},
+            "notification_message_key": message,
+            "notification_message_args": {
+                "name": name,
+                "route": route,
+                "date": fe.date.isoformat(),
+            },
+            "cta_url": url_for("pilots.view_entry", entry_id=fe.id, _external=True),
+        },
+    )
 
 
 def notify_invites(invites: list[FlightCrewInvite], tenant_id: int) -> None:

@@ -980,8 +980,11 @@ def create_app() -> Flask:
         )
         if uid:
             from flights.crew_invites import pending_invite_count
+            from flights.shared_flight import pending_suggestions_to_review
 
-            _nav_crew_invite_count = pending_invite_count(uid)
+            _nav_crew_invite_count = pending_invite_count(uid) + len(
+                pending_suggestions_to_review(uid)
+            )
         else:
             _nav_crew_invite_count = 0
 
@@ -1357,11 +1360,13 @@ def create_app() -> Flask:
             cal_month_name = _dt(cal_year, cal_month, 1).strftime("%B %Y")
 
             from flights.crew_invites import pending_invites_for_user
+            from flights.shared_flight import pending_suggestions_to_review
             from models import CrewRole
 
             return render_template(
                 "dashboard.html",
                 crew_invites=pending_invites_for_user(session["user_id"]),
+                flight_corrections=pending_suggestions_to_review(session["user_id"]),
                 crew_roles=CrewRole,
                 aircraft=aircraft,
                 cover_photos=cover_photos,

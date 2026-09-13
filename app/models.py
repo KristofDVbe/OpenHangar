@@ -959,6 +959,17 @@ class Flight(db.Model):
     )
     second_crew_name = db.Column(db.String(128), nullable=True)
     second_crew_role = db.Column(db.String(16), nullable=True)  # CrewRole constant
+    # Personal remark per slot — only ever edited by the pilot in that slot,
+    # unlike the shared `notes` (see flights/shared_flight.py).
+    pic_remarks = db.Column(db.Text, nullable=True)
+    second_crew_remarks = db.Column(db.Text, nullable=True)
+    # Who logged the flight. While they're still linked to a slot, only they
+    # (plus tenant owners/admins, for managed aircraft) edit the shared
+    # fields; the other linked pilot suggests corrections instead. NULL for
+    # rows created before this was tracked → every linked pilot may edit.
+    created_by_user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
 
     # Phase 30: GPS import
     source = db.Column(db.String(32), nullable=True)
@@ -1069,6 +1080,41 @@ class Flight(db.Model):
             return self.aircraft.registration
         return self.other_aircraft_registration
 
+    def slot_for(self, user_id: int | None) -> str | None:
+        """The crew slot ("pic" / "second") *user_id* is linked to, if any."""
+        if user_id is None:
+            return None
+        if self.pic_user_id == user_id:
+            return "pic"
+        if self.second_crew_user_id == user_id:
+            return "second"
+        return None
+
+    def visible_function_fields(self, user_id: int | None) -> set[str]:
+        """function_* columns to show *user_id* in their logbook: on a flight
+        shared with another linked pilot, only their own slot's hours."""
+        if self.other_linked_user_ids(user_id):
+            if self.slot_for(user_id) == "pic":
+                return {"function_pic"}
+            if self.slot_for(user_id) == "second":
+                return {"function_copilot", "function_dual", "function_instructor"}
+        return {
+            "function_pic",
+            "function_copilot",
+            "function_dual",
+            "function_instructor",
+        }
+
+    def personal_remark_for(self, user_id: int | None) -> str | None:
+        slot = self.slot_for(user_id)
+        if slot == "pic":
+            remark: str | None = self.pic_remarks
+            return remark
+        if slot == "second":
+            remark = self.second_crew_remarks
+            return remark
+        return None
+
     def other_linked_user_ids(self, user_id: int | None) -> set[int]:
         """Accounts linked to either crew slot, other than *user_id* — the
         pilots whose logbooks a delete by *user_id* must not touch (see
@@ -1155,6 +1201,57 @@ class FlightCrewInvite(db.Model):
             status,
         ),
     )
+
+
+class CorrectionStatus:
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    ALL: ClassVar[list[str]] = [PENDING, ACCEPTED, REJECTED]
+
+
+class FlightCorrectionSuggestion(db.Model):
+    """A linked pilot who may not edit a shared flight's common fields
+    proposes new values; the pilot who logged it accepts (applied for both)
+    or rejects. ``changes`` maps field name → [old, new] canonical strings
+    (flights/shared_flight.py)."""
+
+    __tablename__ = "flight_correction_suggestions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    flight_id = db.Column(
+        db.Integer,
+        db.ForeignKey("flights.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    suggested_by_user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    changes = db.Column(db.JSON, nullable=False)
+    status = db.Column(
+        db.String(16),
+        nullable=False,
+        default=CorrectionStatus.PENDING,
+        server_default=CorrectionStatus.PENDING,
+    )
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(UTC),
+    )
+    responded_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    flight = db.relationship(
+        "Flight",
+        backref=db.backref(
+            "correction_suggestions", cascade="all, delete-orphan", passive_deletes=True
+        ),
+    )
+    suggested_by = db.relationship("User", foreign_keys=[suggested_by_user_id])
 
 
 # ── Pilot Profile ──────────────────────────────────────────────────────────────
@@ -3174,6 +3271,9 @@ class NotificationType:
     RESERVATION_AIRCRAFT_GROUNDED = "reservation_aircraft_grounded"
     PERSONAL_MINIMUMS_RECENCY = "personal_minimums_recency"
     CREW_INVITE = "crew_invite"
+    CREW_INVITE_ANSWERED = "crew_invite_answered"
+    SHARED_FLIGHT_CHANGED = "shared_flight_changed"
+    FLIGHT_CORRECTION = "flight_correction"
 
     ALL: ClassVar[list[str]] = [
         GROUNDING_SNAG_OPENED,
@@ -3195,6 +3295,9 @@ class NotificationType:
         RESERVATION_AIRCRAFT_GROUNDED,
         PERSONAL_MINIMUMS_RECENCY,
         CREW_INVITE,
+        CREW_INVITE_ANSWERED,
+        SHARED_FLIGHT_CHANGED,
+        FLIGHT_CORRECTION,
     ]
 
     # System defaults — coded constants; DB only stores per-user or per-tenant overrides
@@ -3218,6 +3321,9 @@ class NotificationType:
         RESERVATION_AIRCRAFT_GROUNDED: {"enabled": True, "threshold_days": None},
         PERSONAL_MINIMUMS_RECENCY: {"enabled": True, "threshold_days": None},
         CREW_INVITE: {"enabled": True, "threshold_days": None},
+        CREW_INVITE_ANSWERED: {"enabled": True, "threshold_days": None},
+        SHARED_FLIGHT_CHANGED: {"enabled": True, "threshold_days": None},
+        FLIGHT_CORRECTION: {"enabled": True, "threshold_days": None},
     }
 
     # Capability flags required — user sees this type in their prefs if they have >= 1
@@ -3243,6 +3349,9 @@ class NotificationType:
         RESERVATION_AIRCRAFT_GROUNDED: ["is_owner", "is_pilot", "is_maint"],
         PERSONAL_MINIMUMS_RECENCY: ["is_pilot"],
         CREW_INVITE: ["is_pilot"],
+        CREW_INVITE_ANSWERED: ["is_pilot"],
+        SHARED_FLIGHT_CHANGED: ["is_pilot"],
+        FLIGHT_CORRECTION: ["is_pilot"],
     }
 
     # Types that have a configurable days-ahead threshold

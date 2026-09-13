@@ -49,12 +49,18 @@ their `user_id` into the slot. Deleting never removes another pilot's hours
 only unlinks the acting pilot while another account is linked, and an
 aircraft-side delete (flight log, airframe/GPS import rollback, deleting the
 aircraft) detaches linked flights into "other aircraft" flights instead of
-deleting them. Still open:
-- **Edit boundary:** a confirmed second pilot should only edit their own
-  personal fields (role/function time, a personal remark), with changes to
-  shared fields sent to the logger as a suggested correction. Needs a
-  `created_by_user_id` on `Flight`; the offline sync path needs the same
-  restriction.
+deleting them.
+
+**Status — phase 2 built (per-pilot edit boundary):** `Flight.created_by_user_id`
+records the logger; while linked, only they (plus tenant owners/admins on a
+managed aircraft) edit the shared fields, and every save path — flight form,
+standalone entry form, offline sync — restores the other linked pilot's
+personal fields (name, role, function hours, new `pic_remarks` /
+`second_crew_remarks`). The other pilot edits those on *My part of this
+flight* (`flights.crew_entry`) and proposes changes to shared fields as a
+`FlightCorrectionSuggestion` the logger accepts or rejects
+(`flights/shared_flight.py`), with `crew_invite_answered`,
+`shared_flight_changed` and `flight_correction` notifications. Still open:
 - **Claim from the other side:** a "claim my slot" action on
   `_find_duplicate_flight`'s near-match warning, sending the request to the
   logger instead (same invite table, reverse direction).
