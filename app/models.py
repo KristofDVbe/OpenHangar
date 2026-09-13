@@ -1069,6 +1069,93 @@ class Flight(db.Model):
             return self.aircraft.registration
         return self.other_aircraft_registration
 
+    def other_linked_user_ids(self, user_id: int | None) -> set[int]:
+        """Accounts linked to either crew slot, other than *user_id* — the
+        pilots whose logbooks a delete by *user_id* must not touch (see
+        flights/crew_removal.py)."""
+        return {
+            uid
+            for uid in (self.pic_user_id, self.second_crew_user_id)
+            if uid is not None and uid != user_id
+        }
+
+
+# ── Crew invites (ask another pilot to confirm their slot on a flight) ────────
+
+
+class CrewSlot:
+    """Which of a Flight row's two identity slots an invite targets."""
+
+    PIC = "pic"  # pic_user_id / pic_name
+    SECOND = "second"  # second_crew_user_id / second_crew_name / second_crew_role
+    ALL: ClassVar[list[str]] = [PIC, SECOND]
+
+
+class CrewInviteStatus:
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    DECLINED = "declined"
+    # The inviter changed/removed the name, or the slot got filled another way.
+    CANCELLED = "cancelled"
+    ALL: ClassVar[list[str]] = [PENDING, ACCEPTED, DECLINED, CANCELLED]
+
+
+class FlightCrewInvite(db.Model):
+    """A pilot named another pilot of the same tenant in one of a flight's
+    crew slots; that pilot confirms (their user id is then written into the
+    slot, and the flight appears in their logbook) or declines.
+
+    The slot's user id is deliberately *not* set while the invite is pending,
+    so an unconfirmed flight never counts towards the invited pilot's totals
+    or currency.
+    """
+
+    __tablename__ = "flight_crew_invites"
+
+    id = db.Column(db.Integer, primary_key=True)
+    flight_id = db.Column(
+        db.Integer,
+        db.ForeignKey("flights.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    slot = db.Column(db.String(16), nullable=False)  # CrewSlot constant
+    invited_user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    invited_by_user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    status = db.Column(
+        db.String(16),
+        nullable=False,
+        default=CrewInviteStatus.PENDING,
+        server_default=CrewInviteStatus.PENDING,
+    )
+    created_at = db.Column(
+        db.DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(UTC),
+    )
+    responded_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    flight = db.relationship(
+        "Flight",
+        backref=db.backref(
+            "crew_invites", cascade="all, delete-orphan", passive_deletes=True
+        ),
+    )
+    invited_user = db.relationship("User", foreign_keys=[invited_user_id])
+    invited_by = db.relationship("User", foreign_keys=[invited_by_user_id])
+
+    __table_args__ = (
+        db.Index(
+            "ix_flight_crew_invites_invited_user_id_status",
+            invited_user_id,
+            status,
+        ),
+    )
+
 
 # ── Pilot Profile ──────────────────────────────────────────────────────────────
 
@@ -3086,6 +3173,7 @@ class NotificationType:
     RENTER_AUTHORIZATION_EXPIRY = "renter_authorization_expiry"
     RESERVATION_AIRCRAFT_GROUNDED = "reservation_aircraft_grounded"
     PERSONAL_MINIMUMS_RECENCY = "personal_minimums_recency"
+    CREW_INVITE = "crew_invite"
 
     ALL: ClassVar[list[str]] = [
         GROUNDING_SNAG_OPENED,
@@ -3106,6 +3194,7 @@ class NotificationType:
         RENTER_AUTHORIZATION_EXPIRY,
         RESERVATION_AIRCRAFT_GROUNDED,
         PERSONAL_MINIMUMS_RECENCY,
+        CREW_INVITE,
     ]
 
     # System defaults — coded constants; DB only stores per-user or per-tenant overrides
@@ -3128,6 +3217,7 @@ class NotificationType:
         RENTER_AUTHORIZATION_EXPIRY: {"enabled": True, "threshold_days": 30},
         RESERVATION_AIRCRAFT_GROUNDED: {"enabled": True, "threshold_days": None},
         PERSONAL_MINIMUMS_RECENCY: {"enabled": True, "threshold_days": None},
+        CREW_INVITE: {"enabled": True, "threshold_days": None},
     }
 
     # Capability flags required — user sees this type in their prefs if they have >= 1
@@ -3152,6 +3242,7 @@ class NotificationType:
         # Any authenticated role that could hold a reservation.
         RESERVATION_AIRCRAFT_GROUNDED: ["is_owner", "is_pilot", "is_maint"],
         PERSONAL_MINIMUMS_RECENCY: ["is_pilot"],
+        CREW_INVITE: ["is_pilot"],
     }
 
     # Types that have a configurable days-ahead threshold

@@ -45,6 +45,7 @@
     {% elif t == 'renter_authorization_expiry' %}{{ _('Renter authorization expiring') }}
     {% elif t == 'reservation_aircraft_grounded' %}{{ _('Aircraft grounded (upcoming reservation)') }}
     {% elif t == 'personal_minimums_recency' %}{{ _('Personal minimums recency reminder') }}
+    {% elif t == 'crew_invite' %}{{ _('Flight crew confirmation request') }}
     {% else %}{{ t }}{% endif %}
   {% endmacro %}
 
@@ -67,6 +68,7 @@
     {% elif t == 'renter_authorization_expiry' %}{{ _('A renter authorization or verified medical date is approaching expiry.') }}
     {% elif t == 'reservation_aircraft_grounded' %}{{ _('A grounding snag was opened on an aircraft you hold a confirmed reservation for.') }}
     {% elif t == 'personal_minimums_recency' %}{{ _('You have exceeded a comfort-zone recency threshold in your personal minimums (e.g. days since your last flight).') }}
+    {% elif t == 'crew_invite' %}{{ _('Another pilot logged a flight with you on board and asks you to confirm it in your pilot logbook.') }}
     {% else %}{{ t }}{% endif %}
   {% endmacro %}
 

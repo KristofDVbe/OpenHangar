@@ -69,6 +69,11 @@
   </div>
   {% endif %}
 
+  {% if crew_invites %}
+  {% set crew_invites_next = 'logbook' %}
+  {% include 'partials/_crew_invites.html' %}
+  {% endif %}
+
   {% if entries or total_entries > 0 %}
 
   {# ── Per-page selector + entry count ─────────────────────────────────────── #}
@@ -245,7 +250,7 @@
                aircraft log entry — there's only one way to delete it now. #}
             <form method="POST" action="{{ url_for('pilots.delete_entry', entry_id=e.id) }}"
                   class="d-inline"
-                  data-confirm="{{ _('Delete this logbook entry and its aircraft log entry? This cannot be undone.') if e.aircraft_id else _('Delete this logbook entry?') }}">
+                  data-confirm="{{ _('Remove this flight from your logbook? It stays in the other pilot\'s logbook.') if e.other_linked_user_ids(session.get('user_id')) else (_('Delete this logbook entry and its aircraft log entry? This cannot be undone.') if e.aircraft_id else _('Delete this logbook entry?')) }}">
               <button type="submit" class="btn btn-sm btn-outline-danger" title="{{ _('Delete') }}">
                 <i class="bi bi-trash"></i>
               </button>

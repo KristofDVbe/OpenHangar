@@ -41,9 +41,11 @@ from models import (
     Aircraft,
     AppSetting,
     Component,
+    CrewInviteStatus,
     CrewRole,
     Document,
     Flight,
+    FlightCrewInvite,
     GpsTrack,
     Reservation,
     ReservationStatus,
@@ -63,11 +65,23 @@ from utils import (
     login_required,
     require_pilot_access,
     require_role,
-    tenant_pilot_names,
+    tenant_pilots,
     user_can_access_aircraft,
 )  # pyright: ignore[reportMissingImports]
 from werkzeug.utils import secure_filename
 
+from flights.crew_invites import (  # pyright: ignore[reportMissingImports]
+    accept_invite,
+    decline_invite,
+    notify_invites,
+    pending_invites_for_flight,
+    requested_invites,
+    sync_crew_invites,
+)
+from flights.crew_removal import (  # pyright: ignore[reportMissingImports]
+    flash_kept_in_pilot_logbooks,
+    remove_from_aircraft_log,
+)
 from flights.form_parsing import (  # pyright: ignore[reportMissingImports]
     apply_flight_fields,
     flight_is_lenient,
@@ -622,7 +636,8 @@ def log_flight() -> ResponseReturnValue:
         gps_prefill=gps_prefill,
         nature_suggestions=nature_suggestions,
         pilot_name_hint=pilot_name_hint,
-        crew_name_suggestions=tenant_pilot_names(tid),
+        crew_pilots=tenant_pilots(tid),
+        crew_pending_invites={},
         crew_roles=CrewRole,
         fuel_units=_FUEL_UNITS,
         duplicate=None,
@@ -665,7 +680,8 @@ def edit_flight(flight_id: int) -> ResponseReturnValue:
         gps_prefill=gps_prefill,
         nature_suggestions=_nature_suggestions(fe.aircraft_id),
         pilot_name_hint=None,
-        crew_name_suggestions=tenant_pilot_names(tid),
+        crew_pilots=tenant_pilots(tid),
+        crew_pending_invites=pending_invites_for_flight(fe),
         crew_roles=CrewRole,
         fuel_units=_FUEL_UNITS,
         duplicate=None,
@@ -677,6 +693,57 @@ def edit_flight(flight_id: int) -> ResponseReturnValue:
         active_minimums=None,
         minimums_breaches=[],
     )
+
+
+def _get_own_pending_invite_or_404(invite_id: int) -> FlightCrewInvite:
+    invite = db.session.get(FlightCrewInvite, invite_id)
+    if not invite or invite.invited_user_id != session.get("user_id"):
+        abort(404)
+    return invite
+
+
+def _crew_invite_redirect() -> ResponseReturnValue:
+    """Back to where the Confirm/Decline button was clicked — a fixed
+    allow-list, so the `next` field can never become an open redirect."""
+    if request.form.get("next") == "dashboard":
+        return redirect(url_for("index") + "#crew-invites")
+    return redirect(url_for("pilots.logbook") + "#crew-invites")
+
+
+@flights_bp.route("/flights/crew-invites/<int:invite_id>/accept", methods=["POST"])
+@login_required
+@require_pilot_access
+def accept_crew_invite(invite_id: int) -> ResponseReturnValue:
+    invite = _get_own_pending_invite_or_404(invite_id)
+    if invite.status != CrewInviteStatus.PENDING:
+        flash(_("This flight invitation is no longer open."), "warning")
+        return _crew_invite_redirect()
+    user = db.session.get(User, invite.invited_user_id)
+    assert user is not None, "invited_user_id is a non-null CASCADE foreign key"
+    accepted = accept_invite(invite, user)
+    db.session.commit()
+    if accepted:
+        flash(_("Flight confirmed — it's now in your pilot logbook."), "success")
+    else:
+        flash(
+            _("This flight's crew slot has already been filled — nothing to confirm."),
+            "warning",
+        )
+    return _crew_invite_redirect()
+
+
+@flights_bp.route("/flights/crew-invites/<int:invite_id>/decline", methods=["POST"])
+@login_required
+@require_pilot_access
+def decline_crew_invite(invite_id: int) -> ResponseReturnValue:
+    invite = _get_own_pending_invite_or_404(invite_id)
+    if invite.status != CrewInviteStatus.PENDING:
+        flash(_("This flight invitation is no longer open."), "warning")
+        return _crew_invite_redirect()
+    decline_invite(invite)
+    db.session.commit()
+    flash(_("Flight invitation declined."), "info")
+    return _crew_invite_redirect()
 
 
 @flights_bp.route("/flights/<int:flight_id>/track/image.png")
@@ -1317,7 +1384,13 @@ def _handle_log_flight_post(
             fe.second_crew_user_id = None
             fe.function_dual = None
 
+    # ── Crew invites (a tenant pilot picked in a crew name field) ──────────────
+    tid = _tenant_id()
+    db.session.flush()
+    new_invites = sync_crew_invites(fe, uid, requested_invites(f, uid, tid, pilot_role))
+
     db.session.commit()
+    notify_invites(new_invites, tid)
 
     if ac:
         event_name = "flight.logged" if _fe_is_new else "flight.updated"
@@ -1397,7 +1470,8 @@ def _render_form(
         gps_prefill=None,
         nature_suggestions=nature_suggestions,
         pilot_name_hint=None,
-        crew_name_suggestions=tenant_pilot_names(_tenant_id()),
+        crew_pilots=tenant_pilots(_tenant_id()),
+        crew_pending_invites=pending_invites_for_flight(flight) if flight else {},
         crew_roles=CrewRole,
         fuel_units=_FUEL_UNITS,
         duplicate=duplicate,
@@ -1426,6 +1500,24 @@ def delete_flight(aircraft_id: int, flight_id: int) -> ResponseReturnValue:
     if not fe or fe.aircraft_id != ac.id:
         abort(404)
     label = f"{fe.departure_icao}→{fe.arrival_icao} on {fe.date}"
+    # Linked to another pilot's logbook: take it off this aircraft's log but
+    # keep it for them as an "other aircraft" flight (flights/crew_removal.py).
+    if fe.other_linked_user_ids(session.get("user_id")):
+        remove_from_aircraft_log(fe, session.get("user_id"))
+        db.session.commit()
+        activity(
+            "flight.detached", flight_id=flight_id, aircraft_id=aircraft_id, label=label
+        )
+        flash(
+            _(
+                "Flight %(label)s removed from the aircraft log. It stays in the "
+                "pilot logbook of the crew linked to it.",
+                label=label,
+            ),
+            "success",
+        )
+        return redirect(url_for("flights.list_flights", aircraft_id=ac.id))
+
     activity(
         "flight.deleted", flight_id=flight_id, aircraft_id=aircraft_id, label=label
     )
@@ -2106,24 +2198,22 @@ def airframe_import_rollback(aircraft_id: int, batch_id: int) -> ResponseReturnV
     if not batch or batch.aircraft_id != ac.id:
         abort(404)
 
-    entry_ids = [
-        row.id
-        for row in Flight.query.filter_by(airframe_import_batch_id=batch.id)
-        .with_entities(Flight.id)
-        .all()
-    ]
-    if entry_ids:
-        Flight.query.filter(Flight.id.in_(entry_ids)).delete(synchronize_session=False)
+    actor_id = session.get("user_id")
+    entries = Flight.query.filter_by(airframe_import_batch_id=batch.id).all()
+    # Rows a pilot has since confirmed in their logbook are detached instead
+    # of deleted, so undoing the import never removes pilot hours.
+    kept = sum(not remove_from_aircraft_log(fe, actor_id) for fe in entries)
     db.session.delete(batch)
     db.session.commit()
 
     flash(
         _(
             "Import deleted: %(n)d flight entries removed.",
-            n=len(entry_ids),
+            n=len(entries) - kept,
         ),
         "success",
     )
+    flash_kept_in_pilot_logbooks(kept)
     return redirect(url_for("flights.airframe_import_upload", aircraft_id=ac.id))
 
 
