@@ -18,10 +18,12 @@ the pilot files a flight entry for an aircraft managed in OpenHangar.
 | Time basis | Engine time (tach) for maintenance; flight time for hours | Flight time only |
 | Who maintains it | Commander — signs each entry | Holder — for their own flights only |
 
-When a pilot is recorded as crew on a flight entry in the aircraft logbook
-(via the `FlightCrew` table), OpenHangar pre-populates the corresponding pilot
-logbook entry automatically. A unified "log flight" form populates both logbooks
-in a single step.
+A unified "log flight" form populates both logbooks in a single step: one
+`Flight` row carries the aircraft-log fields and the EASA pilot-log figures,
+with two crew slots (PIC and second crew), each holding a free-text name and,
+optionally, the OpenHangar account of the pilot in that slot. A flight appears
+in the pilot logbook of every account linked to one of its slots — see
+[Flights with two pilots](#flights-with-two-pilots).
 
 ---
 
@@ -182,8 +184,37 @@ aircraft not managed in OpenHangar — a rental, another club's plane, a friend'
 aircraft. Aircraft registration and type are free-text fields; no link to the
 aircraft database is required.
 
-If a linked `FlightEntry` is later deleted, the pilot logbook entry is preserved
-with `flight_id` set to null — the pilot's personal record is never silently lost.
+If a flight is later deleted from the aircraft logbook (or its aircraft or
+import batch is deleted) while it is in a pilot's logbook, it is kept for that
+pilot as a standalone entry, with the registration and type copied into the
+free-text fields — the pilot's personal record is never silently lost.
+
+---
+
+## Flights with two pilots
+
+The crew name fields on the *Log a flight* form suggest the pilots of the same
+organisation (active users with a pilot role or the pilot capability). Picking
+a colleague other than yourself sends them a **crew confirmation request**
+(`FlightCrewInvite`): an e-mail (`crew_invite` notification type, on by
+default), a *Flights waiting for your confirmation* panel on their dashboard
+and pilot logbook, and a badge on the *Pilot* menu item.
+
+- Their account is linked to the slot only when they **confirm**; until then
+  the flight is not in their logbook and does not count towards their totals
+  or currency. On confirmation their function time is filled from the slot:
+  PIC → PIC time; second crew as instructor → instructor time, co-pilot →
+  co-pilot time, student → dual time (a safety pilot gets no function time).
+- **Declining** leaves only the typed name on the flight, and the same pilot
+  is not asked again for that slot.
+- Changing or removing the name before they answer cancels the request; a
+  confirmed pilot is never unlinked by the logger re-saving the form.
+
+The EASA figures live once on the flight, shared by both pilots. Deleting
+therefore only ever removes the acting pilot: deleting a shared flight from
+your logbook (or undoing the import it came from) unlinks you and leaves the
+other pilot's entry untouched; the flight itself is deleted only when no other
+account is linked.
 
 ---
 
