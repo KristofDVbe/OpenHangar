@@ -11680,3 +11680,95 @@ msgstr "De waarde moet {max} of lager zijn."
 #: app/templates/base.html
 msgid "Please enter a valid value."
 msgstr "Voer een geldige waarde in."
+
+#: app/flights/crew_invites.py
+msgid "Confirm your flight on %(date)s"
+msgstr "Bevestig uw vlucht van %(date)s"
+
+#: app/flights/crew_invites.py
+msgid "%(name)s added you to a flight"
+msgstr "%(name)s heeft u aan een vlucht toegevoegd"
+
+#: app/flights/crew_invites.py
+msgid "%(name)s logged a flight with you on board. Confirm it to add it to your pilot logbook, or decline if it isn't yours."
+msgstr "%(name)s heeft een vlucht gelogd met u aan boord. Bevestig ze om ze aan uw pilotenlogboek toe te voegen, of weiger als het niet uw vlucht is."
+
+#: app/flights/crew_invites.py
+msgid "Your role"
+msgstr "Uw rol"
+
+#: app/flights/crew_invites.py
+msgid "Review in OpenHangar"
+msgstr "Bekijken in OpenHangar"
+
+#: app/flights/routes.py
+msgid "This flight invitation is no longer open."
+msgstr "Deze vluchtuitnodiging staat niet meer open."
+
+#: app/flights/routes.py
+msgid "Flight confirmed — it's now in your pilot logbook."
+msgstr "Vlucht bevestigd — ze staat nu in uw pilotenlogboek."
+
+#: app/flights/routes.py
+msgid "This flight's crew slot has already been filled — nothing to confirm."
+msgstr "Deze bemanningsplaats is al ingevuld — er valt niets te bevestigen."
+
+#: app/flights/routes.py
+msgid "Flight invitation declined."
+msgstr "Vluchtuitnodiging geweigerd."
+
+#: app/templates/partials/_crew_invites.html
+msgid "Flights waiting for your confirmation"
+msgstr "Vluchten die op uw bevestiging wachten"
+
+#: app/templates/partials/_crew_invites.html
+msgid "Another pilot logged these flights with you on board. Confirm to add them to your pilot logbook."
+msgstr "Een andere piloot heeft deze vluchten gelogd met u aan boord. Bevestig om ze aan uw pilotenlogboek toe te voegen."
+
+#: app/templates/partials/_crew_invites.html
+msgid "Logged by"
+msgstr "Gelogd door"
+
+#: app/templates/flights/flight_form.html
+msgid "%(name)s will be asked to confirm this flight in their own pilot logbook."
+msgstr "%(name)s wordt gevraagd deze vlucht in het eigen pilotenlogboek te bevestigen."
+
+#: app/templates/flights/flight_form.html
+msgid "Waiting for %(name)s to confirm this flight."
+msgstr "Wacht op bevestiging van deze vlucht door %(name)s."
+
+#: app/templates/config/notifications.html
+msgid "Flight crew confirmation request"
+msgstr "Verzoek om bemanning te bevestigen"
+
+#: app/templates/config/notifications.html
+msgid "Another pilot logged a flight with you on board and asks you to confirm it in your pilot logbook."
+msgstr "Een andere piloot heeft een vlucht gelogd met u aan boord en vraagt u die in uw pilotenlogboek te bevestigen."
+
+#: app/pilots/routes.py
+msgid "Flight removed from your logbook. It stays in the other pilot's logbook."
+msgstr "Vlucht verwijderd uit uw logboek. Ze blijft in het logboek van de andere piloot staan."
+
+#: app/flights/routes.py
+msgid "Flight %(label)s removed from the aircraft log. It stays in the pilot logbook of the crew linked to it."
+msgstr "Vlucht %(label)s verwijderd uit het vliegtuiglogboek. Ze blijft in het pilotenlogboek van de gekoppelde bemanning staan."
+
+#: app/templates/pilots/logbook.html
+msgid "Remove this flight from your logbook? It stays in the other pilot's logbook."
+msgstr "Deze vlucht uit uw logboek verwijderen? Ze blijft in het logboek van de andere piloot staan."
+
+#: app/templates/flights/list.html
+msgid "Remove this flight from the aircraft log? It stays in the pilot logbook of the crew linked to it."
+msgstr "Deze vlucht uit het vliegtuiglogboek verwijderen? Ze blijft in het pilotenlogboek van de gekoppelde bemanning staan."
+
+#: app/pilots/routes.py
+msgid "One flight stays in another pilot's logbook; it was only removed from yours."
+msgid_plural "%(count)d flights stay in other pilots' logbooks; they were only removed from yours."
+msgstr[0] "Eén vlucht blijft in het logboek van een andere piloot staan; ze is alleen uit het uwe verwijderd."
+msgstr[1] "%(count)d vluchten blijven in de logboeken van andere piloten staan; ze zijn alleen uit het uwe verwijderd."
+
+#: app/flights/crew_removal.py
+msgid "One flight stays in a pilot's logbook as a flight on another aircraft; it was only removed from this aircraft's log."
+msgid_plural "%(num)d flights stay in pilots' logbooks as flights on another aircraft; they were only removed from this aircraft's log."
+msgstr[0] "Eén vlucht blijft in het logboek van een piloot staan als vlucht met een ander vliegtuig; ze is alleen uit het logboek van dit vliegtuig verwijderd."
+msgstr[1] "%(num)d vluchten blijven in de logboeken van piloten staan als vluchten met een ander vliegtuig; ze zijn alleen uit het logboek van dit vliegtuig verwijderd."

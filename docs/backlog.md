@@ -39,6 +39,26 @@ per-user boundary on shared flights (`edit_flight` today never touches
 another pilot's linked entry) — claiming a slot should not let a second
 pilot silently overwrite the header fields the first pilot logged.
 
+**Status — phase 1 built (invite from the logger's side):** picking a tenant
+pilot in the flight form's PIC / second-crew name field now records a pending
+`FlightCrewInvite` (`flights/crew_invites.py`), e-mails that pilot
+(`NotificationType.CREW_INVITE`), and lists it on their dashboard and pilot
+logbook (plus a nav badge) with Confirm / Decline. Only confirming writes
+their `user_id` into the slot. Deleting never removes another pilot's hours
+(`flights/crew_removal.py`): a pilot-side delete or logbook import rollback
+only unlinks the acting pilot while another account is linked, and an
+aircraft-side delete (flight log, airframe/GPS import rollback, deleting the
+aircraft) detaches linked flights into "other aircraft" flights instead of
+deleting them. Still open:
+- **Edit boundary:** a confirmed second pilot should only edit their own
+  personal fields (role/function time, a personal remark), with changes to
+  shared fields sent to the logger as a suggested correction. Needs a
+  `created_by_user_id` on `Flight`; the offline sync path needs the same
+  restriction.
+- **Claim from the other side:** a "claim my slot" action on
+  `_find_duplicate_flight`'s near-match warning, sending the request to the
+  logger instead (same invite table, reverse direction).
+
 ---
 
 ## Shared ownership: deferred scope from Phase 39

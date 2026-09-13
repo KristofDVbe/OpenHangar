@@ -32,8 +32,15 @@ from flask import (  # pyright: ignore[reportMissingImports]
 from flask.typing import ResponseReturnValue  # pyright: ignore[reportMissingImports]
 from flask_babel import gettext as _  # pyright: ignore[reportMissingImports]
 from flask_babel import ngettext
+from flights.crew_invites import (  # pyright: ignore[reportMissingImports]
+    pending_invites_for_user,
+)
+from flights.crew_removal import (  # pyright: ignore[reportMissingImports]
+    remove_flight_for_user,
+)
 from models import (  # pyright: ignore[reportMissingImports]
     Aircraft,
+    CrewRole,
     Document,
     Flight,
     FstdType,
@@ -914,6 +921,8 @@ def logbook() -> ResponseReturnValue:
         logbook_milestone=logbook_milestone,
         LogbookEntryType=LogbookEntryType,
         minimums_breaches=minimums_breaches,
+        crew_invites=pending_invites_for_user(uid),
+        crew_roles=CrewRole,
     )
 
 
@@ -1104,6 +1113,20 @@ def delete_entry(entry_id: int) -> ResponseReturnValue:
     entry = db.session.get(Flight, entry_id)
     if not entry or (entry.pic_user_id != uid and entry.second_crew_user_id != uid):
         abort(404)
+
+    # Another pilot has this flight in their logbook too: only remove this
+    # pilot's own link — never their colleague's hours (flights/crew_removal.py).
+    if entry.other_linked_user_ids(uid):
+        remove_flight_for_user(entry, uid)
+        db.session.commit()
+        flash(
+            _(
+                "Flight removed from your logbook. It stays in the other "
+                "pilot's logbook."
+            ),
+            "success",
+        )
+        return redirect(url_for("pilots.logbook"))
 
     # Unified model: there's only one row now, so deleting it removes both
     # the pilot's own record and the airframe log entry at once (no more
@@ -1870,19 +1893,38 @@ def import_rollback(batch_id: int) -> ResponseReturnValue:
     # log entry too, not just the pilot's personal copy (a behaviour change
     # from the old two-table design, where the promoted FlightEntry was a
     # separate row left untouched by a pilot-side rollback).
-    Flight.query.filter_by(import_batch_id=batch_id).delete()
+    # An entry another pilot has in their logbook too is kept for them — only
+    # this pilot's link is removed (flights/crew_removal.py).
+    kept = 0
+    for entry in Flight.query.filter_by(import_batch_id=batch_id).all():
+        if not remove_flight_for_user(entry, uid):
+            entry.import_batch_id = None
+            kept += 1
     db.session.delete(batch)
     db.session.commit()
 
+    removed = max(batch.row_count - kept, 0)
     flash(
         ngettext(
             "Import deleted: one entry removed.",
             "Import deleted: all %(count)d entries removed.",
-            batch.row_count,
-            count=batch.row_count,
+            removed,
+            count=removed,
         ),
         "success",
     )
+    if kept:
+        flash(
+            ngettext(
+                "One flight stays in another pilot's logbook; it was only "
+                "removed from yours.",
+                "%(count)d flights stay in other pilots' logbooks; they were "
+                "only removed from yours.",
+                kept,
+                count=kept,
+            ),
+            "info",
+        )
     return redirect(url_for("pilots.import_history"))
 
 

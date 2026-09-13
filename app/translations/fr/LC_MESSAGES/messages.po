@@ -11680,3 +11680,95 @@ msgstr "La valeur doit être inférieure ou égale à {max}."
 #: app/templates/base.html
 msgid "Please enter a valid value."
 msgstr "Veuillez saisir une valeur valide."
+
+#: app/flights/crew_invites.py
+msgid "Confirm your flight on %(date)s"
+msgstr "Confirmez votre vol du %(date)s"
+
+#: app/flights/crew_invites.py
+msgid "%(name)s added you to a flight"
+msgstr "%(name)s vous a ajouté à un vol"
+
+#: app/flights/crew_invites.py
+msgid "%(name)s logged a flight with you on board. Confirm it to add it to your pilot logbook, or decline if it isn't yours."
+msgstr "%(name)s a enregistré un vol avec vous à bord. Confirmez-le pour l’ajouter à votre carnet de vol, ou refusez-le s’il ne vous concerne pas."
+
+#: app/flights/crew_invites.py
+msgid "Your role"
+msgstr "Votre rôle"
+
+#: app/flights/crew_invites.py
+msgid "Review in OpenHangar"
+msgstr "Vérifier dans OpenHangar"
+
+#: app/flights/routes.py
+msgid "This flight invitation is no longer open."
+msgstr "Cette invitation de vol n’est plus ouverte."
+
+#: app/flights/routes.py
+msgid "Flight confirmed — it's now in your pilot logbook."
+msgstr "Vol confirmé — il figure désormais dans votre carnet de vol."
+
+#: app/flights/routes.py
+msgid "This flight's crew slot has already been filled — nothing to confirm."
+msgstr "Ce poste d’équipage est déjà occupé — rien à confirmer."
+
+#: app/flights/routes.py
+msgid "Flight invitation declined."
+msgstr "Invitation de vol refusée."
+
+#: app/templates/partials/_crew_invites.html
+msgid "Flights waiting for your confirmation"
+msgstr "Vols en attente de votre confirmation"
+
+#: app/templates/partials/_crew_invites.html
+msgid "Another pilot logged these flights with you on board. Confirm to add them to your pilot logbook."
+msgstr "Un autre pilote a enregistré ces vols avec vous à bord. Confirmez pour les ajouter à votre carnet de vol."
+
+#: app/templates/partials/_crew_invites.html
+msgid "Logged by"
+msgstr "Enregistré par"
+
+#: app/templates/flights/flight_form.html
+msgid "%(name)s will be asked to confirm this flight in their own pilot logbook."
+msgstr "%(name)s sera invité(e) à confirmer ce vol dans son propre carnet de vol."
+
+#: app/templates/flights/flight_form.html
+msgid "Waiting for %(name)s to confirm this flight."
+msgstr "En attente de la confirmation de ce vol par %(name)s."
+
+#: app/templates/config/notifications.html
+msgid "Flight crew confirmation request"
+msgstr "Demande de confirmation d’équipage"
+
+#: app/templates/config/notifications.html
+msgid "Another pilot logged a flight with you on board and asks you to confirm it in your pilot logbook."
+msgstr "Un autre pilote a enregistré un vol avec vous à bord et vous demande de le confirmer dans votre carnet de vol."
+
+#: app/pilots/routes.py
+msgid "Flight removed from your logbook. It stays in the other pilot's logbook."
+msgstr "Vol retiré de votre carnet de vol. Il reste dans le carnet de vol de l’autre pilote."
+
+#: app/flights/routes.py
+msgid "Flight %(label)s removed from the aircraft log. It stays in the pilot logbook of the crew linked to it."
+msgstr "Vol %(label)s retiré du carnet de route de l’aéronef. Il reste dans le carnet de vol de l’équipage qui y est lié."
+
+#: app/templates/pilots/logbook.html
+msgid "Remove this flight from your logbook? It stays in the other pilot's logbook."
+msgstr "Retirer ce vol de votre carnet de vol ? Il reste dans le carnet de vol de l’autre pilote."
+
+#: app/templates/flights/list.html
+msgid "Remove this flight from the aircraft log? It stays in the pilot logbook of the crew linked to it."
+msgstr "Retirer ce vol du carnet de route de l’aéronef ? Il reste dans le carnet de vol de l’équipage qui y est lié."
+
+#: app/pilots/routes.py
+msgid "One flight stays in another pilot's logbook; it was only removed from yours."
+msgid_plural "%(count)d flights stay in other pilots' logbooks; they were only removed from yours."
+msgstr[0] "Un vol reste dans le carnet de vol d’un autre pilote ; il a seulement été retiré du vôtre."
+msgstr[1] "%(count)d vols restent dans les carnets de vol d’autres pilotes ; ils ont seulement été retirés du vôtre."
+
+#: app/flights/crew_removal.py
+msgid "One flight stays in a pilot's logbook as a flight on another aircraft; it was only removed from this aircraft's log."
+msgid_plural "%(num)d flights stay in pilots' logbooks as flights on another aircraft; they were only removed from this aircraft's log."
+msgstr[0] "Un vol reste dans le carnet de vol d’un pilote comme vol sur un autre aéronef ; il a seulement été retiré du carnet de route de cet aéronef."
+msgstr[1] "%(num)d vols restent dans les carnets de vol des pilotes comme vols sur un autre aéronef ; ils ont seulement été retirés du carnet de route de cet aéronef."

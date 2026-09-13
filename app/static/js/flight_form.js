@@ -65,6 +65,42 @@
       document.querySelectorAll('input[name="pilot_role"]').forEach(function (r) { r.addEventListener('change', applyRoleHint); });
     }
 
+    // Crew name picker: when a name field's text exactly matches one of the
+    // tenant-pilot suggestions, store that pilot's user id in the slot's
+    // hidden crew_user_id_* field so the server can ask them to confirm the
+    // flight (flights/crew_invites.py re-validates id and name). Any other
+    // text clears it — the name then stays free text only.
+    var crewSection = document.getElementById('crew-section');
+    var crewSuggestions = document.getElementById('crew-name-suggestions');
+    if (crewSection && crewSuggestions) {
+      var currentUserId = crewSection.dataset.currentUserId || '';
+      var inviteHint = crewSection.dataset.inviteHint || '';
+      [0, 1].forEach(function (idx) {
+        var nameInput = document.getElementById('crew_name_' + idx);
+        var idInput = document.getElementById('crew_user_id_' + idx);
+        var hintEl = document.getElementById('crew_invite_hint_' + idx);
+        if (!nameInput || !idInput) return;
+        function syncCrewUserId() {
+          var typed = nameInput.value.trim().toLowerCase();
+          var match = null;
+          Array.prototype.forEach.call(crewSuggestions.options, function (opt) {
+            if (opt.value.trim().toLowerCase() === typed) match = opt;
+          });
+          var userId = match ? match.dataset.userId : '';
+          idInput.value = userId && userId !== currentUserId ? userId : '';
+          // An already-pending invite has its own "waiting for…" line.
+          var showHint = idInput.value && idInput.value !== (idInput.dataset.pendingUserId || '');
+          if (hintEl) {
+            hintEl.textContent = showHint ? inviteHint.replace('__NAME__', match.value) : '';
+            hintEl.classList.toggle('d-none', !showHint);
+          }
+        }
+        nameInput.addEventListener('input', syncCrewUserId);
+        nameInput.addEventListener('change', syncCrewUserId);
+        syncCrewUserId();
+      });
+    }
+
     // Counter fields accept either a plain decimal ("972.2") or unambiguous
     // "H:MM" colon notation ("972:12") — mirrors parse_duration_value() in
     // pilots/logbook_import.py, which the server uses for the same fields.
