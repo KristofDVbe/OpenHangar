@@ -33,6 +33,7 @@ from flask.typing import ResponseReturnValue  # pyright: ignore[reportMissingImp
 from flask_babel import gettext as _  # pyright: ignore[reportMissingImports]
 from flask_babel import ngettext
 from flights.crew_invites import (  # pyright: ignore[reportMissingImports]
+    pending_claims_to_review,
     pending_invites_for_user,
 )
 from flights.crew_removal import (  # pyright: ignore[reportMissingImports]
@@ -931,6 +932,7 @@ def logbook() -> ResponseReturnValue:
         LogbookEntryType=LogbookEntryType,
         minimums_breaches=minimums_breaches,
         crew_invites=pending_invites_for_user(uid),
+        crew_claims=pending_claims_to_review(uid),
         flight_corrections=pending_suggestions_to_review(uid),
         crew_roles=CrewRole,
     )

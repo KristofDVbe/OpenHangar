@@ -238,6 +238,16 @@ change what (`flights/shared_flight.py`):
   suggester), all on by default.
 - On a shared flight, the logbook and entry detail show each pilot only their
   own function hours and personal remark.
+- **Claims** (the reverse of an invite, same `FlightCrewInvite` table with
+  `kind="claim"`): when the duplicate-flight check finds that the flight a
+  pilot is logging was already logged by someone else, and the slot matching
+  their role (PIC or Dual) is still free, the warning offers *Ask to be added
+  to this flight*. The pilot(s) owning the flight's shared fields approve or
+  decline (`crew_claim` notification); approval links the claimant exactly
+  like a confirmed invite, using the second-crew role they entered if the
+  flight names none. The duplicate check only matches other pilots' flights
+  on a managed aircraft, so claims are offered there; for other aircraft the
+  logger invites the crew instead.
 
 Deleting only ever removes the acting pilot: deleting a shared flight from
 your logbook (or undoing the import it came from) unlinks you and leaves the

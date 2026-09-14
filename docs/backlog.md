@@ -60,10 +60,17 @@ personal fields (name, role, function hours, new `pic_remarks` /
 flight* (`flights.crew_entry`) and proposes changes to shared fields as a
 `FlightCorrectionSuggestion` the logger accepts or rejects
 (`flights/shared_flight.py`), with `crew_invite_answered`,
-`shared_flight_changed` and `flight_correction` notifications. Still open:
-- **Claim from the other side:** a "claim my slot" action on
-  `_find_duplicate_flight`'s near-match warning, sending the request to the
-  logger instead (same invite table, reverse direction).
+`shared_flight_changed` and `flight_correction` notifications.
+
+**Status — phase 3 built (claim from the other side):** the duplicate-flight
+warning offers *Ask to be added to this flight* when the matched flight was
+logged by someone else and the slot for the pilot's role is free; it records
+a `FlightCrewInvite` with `kind="claim"` that the logger approves or declines
+(`crew_claim` notification). Remaining gap: `_find_duplicate_flight` only
+matches *other* pilots' flights on a managed aircraft, so there is still no
+claim path for a standalone ("other aircraft") flight someone else logged —
+it would need a tenant-wide search by date/registration/route, which exposes
+other pilots' private logbook entries and so needs a product decision first.
 
 ---
 
