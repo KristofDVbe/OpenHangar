@@ -9,9 +9,14 @@ pilot is e-mailed and sees it on their dashboard and pilot logbook →
 ``accept_invite`` writes their user id into the slot, ``decline_invite``
 leaves the slot name-only.
 
+The reverse direction — a *claim* — uses the same table (``kind="claim"``):
+a pilot logging a flight that the duplicate warning finds already logged by
+someone else asks to be added to it (``claim_option`` / ``create_claim``),
+and the pilot who owns that flight's shared fields approves or declines.
+
 The slot's user id is only ever set on acceptance — never silently by the
-logger — so a flight can't appear in someone's logbook (or count towards
-their totals/currency) without their confirmation.
+logger or the claimant — so a flight can't appear in someone's logbook (or
+count towards their totals/currency) without both sides agreeing.
 """
 
 import logging
@@ -20,6 +25,7 @@ from typing import Any
 
 from flask import url_for  # pyright: ignore[reportMissingImports]
 from models import (  # pyright: ignore[reportMissingImports]
+    CrewInviteKind,
     CrewInviteStatus,
     CrewRole,
     CrewSlot,
@@ -29,10 +35,13 @@ from models import (  # pyright: ignore[reportMissingImports]
     User,
     db,
 )
+from sqlalchemy import or_  # pyright: ignore[reportMissingImports]
 from utils import tenant_pilots  # pyright: ignore[reportMissingImports]
 
 from flights.shared_flight import (  # pyright: ignore[reportMissingImports]
     SECOND_CREW_FUNCTION_FIELD,
+    dispatch_to_user,
+    shared_editor_ids,
 )
 
 log = logging.getLogger(__name__)
@@ -102,7 +111,9 @@ def pending_invites_for_flight(fe: Flight) -> dict[str, FlightCrewInvite]:
     return {
         inv.slot: inv
         for inv in FlightCrewInvite.query.filter_by(
-            flight_id=fe.id, status=CrewInviteStatus.PENDING
+            flight_id=fe.id,
+            status=CrewInviteStatus.PENDING,
+            kind=CrewInviteKind.INVITE,
         ).all()
     }
 
@@ -138,6 +149,7 @@ def sync_crew_invites(
             slot=slot,
             invited_user_id=target,
             status=CrewInviteStatus.DECLINED,
+            kind=CrewInviteKind.INVITE,
         ).first()
         if already_declined:
             continue
@@ -163,6 +175,7 @@ def pending_invites_for_user(user_id: int) -> list[FlightCrewInvite]:
         .filter(
             FlightCrewInvite.invited_user_id == user_id,
             FlightCrewInvite.status == CrewInviteStatus.PENDING,
+            FlightCrewInvite.kind == CrewInviteKind.INVITE,
         )
         .order_by(Flight.date.desc(), Flight.id.desc())
         .all()
@@ -172,9 +185,88 @@ def pending_invites_for_user(user_id: int) -> list[FlightCrewInvite]:
 
 def pending_invite_count(user_id: int) -> int:
     count: int = FlightCrewInvite.query.filter_by(
-        invited_user_id=user_id, status=CrewInviteStatus.PENDING
+        invited_user_id=user_id,
+        status=CrewInviteStatus.PENDING,
+        kind=CrewInviteKind.INVITE,
     ).count()
     return count
+
+
+# ── Claims: asking to be added to a flight someone else logged ────────────────
+
+
+def claim_option(fe: Flight, user_id: int, pilot_role: str) -> dict[str, Any] | None:
+    """Whether *user_id*, logging what turns out to be *fe* (duplicate
+    warning) in role *pilot_role*, can ask to be added to it instead.
+
+    Needs a free slot matching their role and at least one pilot who owns the
+    flight's shared fields to approve. Returns the slot, the approvers' names
+    and whether they already asked, or ``None``.
+    """
+    slot = own_slot(pilot_role)
+    if slot is None or fe.slot_for(user_id) is not None:
+        return None
+    if _slot_user_id(fe, slot) is not None:
+        return None
+    approvers = sorted(shared_editor_ids(fe))
+    if not approvers:
+        return None
+    already = (
+        FlightCrewInvite.query.filter_by(
+            flight_id=fe.id,
+            invited_user_id=user_id,
+            status=CrewInviteStatus.PENDING,
+            kind=CrewInviteKind.CLAIM,
+        ).first()
+        is not None
+    )
+    names = []
+    for approver_id in approvers:
+        approver = db.session.get(User, approver_id)
+        names.append(approver.display_name if approver else "—")
+    return {
+        "slot": slot,
+        "approver_names": ", ".join(names),
+        "already_requested": already,
+    }
+
+
+def create_claim(
+    fe: Flight, user_id: int, slot: str, requested_role: str | None
+) -> FlightCrewInvite:
+    role = (
+        requested_role
+        if slot == CrewSlot.SECOND and requested_role in SECOND_CREW_ROLES
+        else None
+    )
+    claim = FlightCrewInvite(
+        flight_id=fe.id,
+        slot=slot,
+        invited_user_id=user_id,
+        invited_by_user_id=user_id,
+        kind=CrewInviteKind.CLAIM,
+        requested_role=role,
+    )
+    db.session.add(claim)
+    return claim
+
+
+SECOND_CREW_ROLES = (CrewRole.IP, CrewRole.COPILOT, CrewRole.STUDENT, CrewRole.SP)
+
+
+def pending_claims_to_review(user_id: int) -> list[FlightCrewInvite]:
+    """Pending claims on flights *user_id* owns the shared fields of."""
+    candidates: list[FlightCrewInvite] = (
+        FlightCrewInvite.query.join(Flight, Flight.id == FlightCrewInvite.flight_id)
+        .filter(
+            FlightCrewInvite.status == CrewInviteStatus.PENDING,
+            FlightCrewInvite.kind == CrewInviteKind.CLAIM,
+            or_(Flight.pic_user_id == user_id, Flight.second_crew_user_id == user_id),
+        )
+        .order_by(Flight.date.desc(), Flight.id.desc())
+        .all()
+    )
+    return [c for c in candidates if user_id in shared_editor_ids(_invite_flight(c))]
 
 
 def accept_invite(invite: FlightCrewInvite, user: User) -> bool:
@@ -201,6 +293,8 @@ def accept_invite(invite: FlightCrewInvite, user: User) -> bool:
         fe.second_crew_user_id = user.id
         if not fe.second_crew_name:
             fe.second_crew_name = user.display_name
+        if not fe.second_crew_role and invite.requested_role:
+            fe.second_crew_role = invite.requested_role
         # A safety pilot has no dedicated EASA function column, so none is set.
         field = SECOND_CREW_FUNCTION_FIELD.get(fe.second_crew_role or "")
         if field and getattr(fe, field) is None:
@@ -221,10 +315,6 @@ def notify_invite_answered(invite: FlightCrewInvite, accepted: bool) -> None:
     if invite.invited_by_user_id is None:
         return
     from flask_babel import lazy_gettext as _l  # pyright: ignore[reportMissingImports]
-
-    from flights.shared_flight import (  # pyright: ignore[reportMissingImports]
-        dispatch_to_user,
-    )
 
     fe = _invite_flight(invite)
     answered_by = db.session.get(User, invite.invited_user_id)
@@ -257,6 +347,82 @@ def notify_invite_answered(invite: FlightCrewInvite, accepted: bool) -> None:
                 "date": fe.date.isoformat(),
             },
             "cta_url": url_for("pilots.view_entry", entry_id=fe.id, _external=True),
+        },
+    )
+
+
+def notify_claim_created(claim: FlightCrewInvite) -> None:
+    """Ask the pilot(s) owning the flight's shared fields to approve a claim."""
+    from flask_babel import lazy_gettext as _l  # pyright: ignore[reportMissingImports]
+
+    fe = _invite_flight(claim)
+    claimant = db.session.get(User, claim.invited_user_id)
+    name = claimant.display_name if claimant else "—"
+    route = f"{fe.departure_icao or '?'} → {fe.arrival_icao or '?'}"
+    for approver_id in sorted(shared_editor_ids(fe)):
+        dispatch_to_user(
+            approver_id,
+            NotificationType.CREW_CLAIM,
+            {
+                "subject_key": _l("%(name)s asks to be added to your flight"),
+                "subject_args": {"name": name},
+                "notification_title_key": _l(
+                    "%(name)s asks to be added to your flight"
+                ),
+                "notification_title_args": {"name": name},
+                "notification_message_key": _l(
+                    "%(name)s says they were on your flight %(route)s on %(date)s "
+                    "and asks to add it to their pilot logbook. Approve or decline "
+                    "the request."
+                ),
+                "notification_message_args": {
+                    "name": name,
+                    "route": route,
+                    "date": fe.date.isoformat(),
+                },
+                "cta_url": url_for("pilots.logbook", _external=True) + "#crew-claims",
+                "cta_label": _l("Review in OpenHangar"),
+            },
+        )
+
+
+def notify_claim_answered(
+    claim: FlightCrewInvite, accepted: bool, actor_id: int
+) -> None:
+    """Tell the pilot who claimed a slot whether they were added."""
+    from flask_babel import lazy_gettext as _l  # pyright: ignore[reportMissingImports]
+
+    fe = _invite_flight(claim)
+    actor = db.session.get(User, actor_id)
+    name = actor.display_name if actor else "—"
+    route = f"{fe.departure_icao or '?'} → {fe.arrival_icao or '?'}"
+    if accepted:
+        title = _l("%(name)s approved your request")
+        message = _l(
+            "%(name)s approved your request: the flight %(route)s on %(date)s is "
+            "now in your pilot logbook."
+        )
+    else:
+        title = _l("%(name)s declined your request")
+        message = _l(
+            "%(name)s declined your request to be added to the flight %(route)s "
+            "on %(date)s."
+        )
+    dispatch_to_user(
+        claim.invited_user_id,
+        NotificationType.CREW_INVITE_ANSWERED,
+        {
+            "subject_key": title,
+            "subject_args": {"name": name},
+            "notification_title_key": title,
+            "notification_title_args": {"name": name},
+            "notification_message_key": message,
+            "notification_message_args": {
+                "name": name,
+                "route": route,
+                "date": fe.date.isoformat(),
+            },
+            "cta_url": url_for("pilots.logbook", _external=True),
         },
     )
 

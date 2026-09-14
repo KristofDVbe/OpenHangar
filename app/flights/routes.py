@@ -42,6 +42,7 @@ from models import (
     AppSetting,
     Component,
     CorrectionStatus,
+    CrewInviteKind,
     CrewInviteStatus,
     CrewRole,
     CrewSlot,
@@ -76,7 +77,11 @@ from werkzeug.utils import secure_filename
 
 from flights.crew_invites import (  # pyright: ignore[reportMissingImports]
     accept_invite,
+    claim_option,
+    create_claim,
     decline_invite,
+    notify_claim_answered,
+    notify_claim_created,
     notify_invite_answered,
     notify_invites,
     own_slot,
@@ -871,9 +876,72 @@ def reject_correction(suggestion_id: int) -> ResponseReturnValue:
 
 def _get_own_pending_invite_or_404(invite_id: int) -> FlightCrewInvite:
     invite = db.session.get(FlightCrewInvite, invite_id)
-    if not invite or invite.invited_user_id != session.get("user_id"):
+    if (
+        not invite
+        or invite.kind != CrewInviteKind.INVITE
+        or invite.invited_user_id != session.get("user_id")
+    ):
         abort(404)
     return invite
+
+
+def _get_reviewable_claim_or_404(claim_id: int) -> FlightCrewInvite:
+    claim = db.session.get(FlightCrewInvite, claim_id)
+    if claim is None or claim.kind != CrewInviteKind.CLAIM:
+        abort(404)
+    fe = db.session.get(Flight, claim.flight_id)
+    assert fe is not None, "flight_id is a non-null CASCADE foreign key"
+    if session.get("user_id") not in shared_editor_ids(fe):
+        abort(404)
+    return claim
+
+
+def _claim_redirect() -> ResponseReturnValue:
+    """Fixed allow-list, like _crew_invite_redirect."""
+    if request.form.get("next") == "dashboard":
+        return redirect(url_for("index") + "#crew-claims")
+    return redirect(url_for("pilots.logbook") + "#crew-claims")
+
+
+@flights_bp.route("/flights/crew-claims/<int:claim_id>/approve", methods=["POST"])
+@login_required
+@require_pilot_access
+def approve_crew_claim(claim_id: int) -> ResponseReturnValue:
+    claim = _get_reviewable_claim_or_404(claim_id)
+    if claim.status != CrewInviteStatus.PENDING:
+        flash(_("This request has already been handled."), "warning")
+        return _claim_redirect()
+    claimant = db.session.get(User, claim.invited_user_id)
+    assert claimant is not None, "invited_user_id is a non-null CASCADE foreign key"
+    accepted = accept_invite(claim, claimant)
+    db.session.commit()
+    if accepted:
+        notify_claim_answered(claim, accepted=True, actor_id=int(session["user_id"]))
+        flash(
+            _("%(name)s was added to the flight.", name=claimant.display_name),
+            "success",
+        )
+    else:
+        flash(
+            _("That crew position has already been filled — nothing to approve."),
+            "warning",
+        )
+    return _claim_redirect()
+
+
+@flights_bp.route("/flights/crew-claims/<int:claim_id>/decline", methods=["POST"])
+@login_required
+@require_pilot_access
+def decline_crew_claim(claim_id: int) -> ResponseReturnValue:
+    claim = _get_reviewable_claim_or_404(claim_id)
+    if claim.status != CrewInviteStatus.PENDING:
+        flash(_("This request has already been handled."), "warning")
+        return _claim_redirect()
+    decline_invite(claim)
+    db.session.commit()
+    notify_claim_answered(claim, accepted=False, actor_id=int(session["user_id"]))
+    flash(_("Request declined."), "info")
+    return _claim_redirect()
 
 
 def _crew_invite_redirect() -> ResponseReturnValue:
@@ -1426,7 +1494,43 @@ def _handle_log_flight_post(
             exclude_flight_id=fe.id if fe else None,
         )
         if dup:
+            # Someone else already logged this flight: offer to ask them to
+            # add this pilot to it, instead of logging a duplicate.
+            dup["claim"] = (
+                claim_option(dup["entry"], uid, pilot_role) if fe is None else None
+            )
             return _render_form(managed_aircraft, fe, None, aircraft_id_raw, dup)
+
+    # ── Claim path: ask to be added to the already-logged flight ──────────────
+    if duplicate_action == "claim" and fe is None and flight_date:
+        dup = _find_duplicate_flight(
+            aircraft_id=ac.id if ac else None,
+            pilot_user_id=uid,
+            date=flight_date,
+            dep_icao=dep,
+            arr_icao=arr,
+            block_off=gps_block_off,
+            block_on=gps_block_on,
+        )
+        option = claim_option(dup["entry"], uid, pilot_role) if dup else None
+        if dup is None or option is None or option["already_requested"]:
+            flash(
+                _("Could not send the request — this flight can't be claimed."),
+                "warning",
+            )
+            return redirect(url_for("pilots.logbook"))
+        claim = create_claim(dup["entry"], uid, option["slot"], f.get("crew_role_1"))
+        db.session.commit()
+        notify_claim_created(claim)
+        flash(
+            _(
+                "Request sent to %(names)s. The flight appears in your logbook "
+                "once they approve it.",
+                names=option["approver_names"],
+            ),
+            "success",
+        )
+        return redirect(url_for("pilots.logbook"))
 
     # ── GPS-attach-only path ───────────────────────────────────────────────────
     if duplicate_action == "link_gps" and flight_date:
