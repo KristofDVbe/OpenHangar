@@ -103,7 +103,23 @@
           date=duplicate.entry.date) }}</p>
     {% endif %}
     <p class="mb-3 small text-muted">{{ _('Choose how to proceed, or continue editing below.') }}</p>
+    {% if duplicate.claim %}
+    <p class="mb-2">
+      <i class="bi bi-people me-1"></i>
+      {% if duplicate.claim.already_requested %}
+      {{ _('You already asked %(names)s to add you to this flight — it appears in your logbook once they approve.', names=duplicate.claim.approver_names) }}
+      {% else %}
+      {{ _('Were you on this flight? Ask %(names)s to add you to it instead of logging it twice.', names=duplicate.claim.approver_names) }}
+      {% endif %}
+    </p>
+    {% endif %}
     <div class="d-flex gap-2 flex-wrap">
+      {% if duplicate.claim and not duplicate.claim.already_requested %}
+      <button type="submit" form="flight-form" name="duplicate_action" value="claim"
+              class="btn btn-ac-primary btn-sm">
+        <i class="bi bi-person-plus me-1"></i>{{ _('Ask to be added to this flight') }}
+      </button>
+      {% endif %}
       <button type="submit" form="flight-form" name="duplicate_action" value="create"
               class="btn btn-warning btn-sm">
         <i class="bi bi-plus-lg me-1"></i>{{ _('Create anyway') }}
@@ -376,13 +392,16 @@
                 {% if _locked.get('second') %}
                 <input type="hidden" name="crew_role_1" value="{{ flight.second_crew_role or '' }}">
                 {% endif %}
+                {# On a re-render (validation error, duplicate warning) keep what
+                   was submitted — otherwise the role silently resets to blank. #}
+                {% set _role_1 = request.form.get('crew_role_1') if request.method == 'POST' else (flight.second_crew_role if flight else none) %}
                 <select class="form-select" id="crew_role_1"{% if _locked.get('second') %} disabled{% else %} name="crew_role_1"{% endif %}>
                   <option value=""
-                    {% if not flight or flight.second_crew_role is none %}selected{% endif %}>{{ _('Select…') }}</option>
+                    {% if not _role_1 %}selected{% endif %}>{{ _('Select…') }}</option>
                   {% for role, label in crew_roles.LABELS.items() %}
                   {% if role != 'PIC' %}
                   <option value="{{ role }}"
-                    {% if flight and flight.second_crew_role == role %}selected{% endif %}>{{ _(label) }}</option>
+                    {% if _role_1 == role %}selected{% endif %}>{{ _(label) }}</option>
                   {% endif %}
                   {% endfor %}
                 </select>

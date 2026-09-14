@@ -979,11 +979,16 @@ def create_app() -> Flask:
             check_legacy_logbook_data() if _is_owner and _in_request else False
         )
         if uid:
-            from flights.crew_invites import pending_invite_count
+            from flights.crew_invites import (
+                pending_claims_to_review,
+                pending_invite_count,
+            )
             from flights.shared_flight import pending_suggestions_to_review
 
-            _nav_crew_invite_count = pending_invite_count(uid) + len(
-                pending_suggestions_to_review(uid)
+            _nav_crew_invite_count = (
+                pending_invite_count(uid)
+                + len(pending_claims_to_review(uid))
+                + len(pending_suggestions_to_review(uid))
             )
         else:
             _nav_crew_invite_count = 0
@@ -1359,13 +1364,17 @@ def create_app() -> Flask:
             cal_next_year = cal_year + 1 if cal_month == 12 else cal_year
             cal_month_name = _dt(cal_year, cal_month, 1).strftime("%B %Y")
 
-            from flights.crew_invites import pending_invites_for_user
+            from flights.crew_invites import (
+                pending_claims_to_review,
+                pending_invites_for_user,
+            )
             from flights.shared_flight import pending_suggestions_to_review
             from models import CrewRole
 
             return render_template(
                 "dashboard.html",
                 crew_invites=pending_invites_for_user(session["user_id"]),
+                crew_claims=pending_claims_to_review(session["user_id"]),
                 flight_corrections=pending_suggestions_to_review(session["user_id"]),
                 crew_roles=CrewRole,
                 aircraft=aircraft,

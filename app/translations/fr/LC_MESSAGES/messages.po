@@ -11976,3 +11976,79 @@ msgstr "Accepter"
 #: app/templates/partials/_flight_corrections.html
 msgid "Reject"
 msgstr "Refuser"
+
+#: app/flights/crew_invites.py
+msgid "%(name)s asks to be added to your flight"
+msgstr "%(name)s demande à être ajouté(e) à votre vol"
+
+#: app/flights/crew_invites.py
+msgid "%(name)s says they were on your flight %(route)s on %(date)s and asks to add it to their pilot logbook. Approve or decline the request."
+msgstr "%(name)s indique avoir participé à votre vol %(route)s du %(date)s et demande à l’ajouter à son carnet de vol. Approuvez ou refusez la demande."
+
+#: app/flights/crew_invites.py
+msgid "%(name)s approved your request: the flight %(route)s on %(date)s is now in your pilot logbook."
+msgstr "%(name)s a approuvé votre demande : le vol %(route)s du %(date)s figure désormais dans votre carnet de vol."
+
+#: app/flights/crew_invites.py
+msgid "%(name)s declined your request"
+msgstr "%(name)s a refusé votre demande"
+
+#: app/flights/crew_invites.py
+msgid "%(name)s declined your request to be added to the flight %(route)s on %(date)s."
+msgstr "%(name)s a refusé votre demande d’ajout au vol %(route)s du %(date)s."
+
+#: app/flights/routes.py
+msgid "This request has already been handled."
+msgstr "Cette demande a déjà été traitée."
+
+#: app/flights/routes.py
+msgid "%(name)s was added to the flight."
+msgstr "%(name)s a été ajouté(e) au vol."
+
+#: app/flights/routes.py
+msgid "That crew position has already been filled — nothing to approve."
+msgstr "Ce poste d’équipage est déjà occupé — rien à approuver."
+
+#: app/flights/routes.py
+msgid "Request declined."
+msgstr "Demande refusée."
+
+#: app/flights/routes.py
+msgid "Could not send the request — this flight can't be claimed."
+msgstr "Impossible d’envoyer la demande — ce vol ne peut pas être revendiqué."
+
+#: app/flights/routes.py
+msgid "Request sent to %(names)s. The flight appears in your logbook once they approve it."
+msgstr "Demande envoyée à %(names)s. Le vol apparaîtra dans votre carnet de vol dès son approbation."
+
+#: app/templates/config/notifications.html
+msgid "Pilot asks to be added to your flight"
+msgstr "Un pilote demande à être ajouté à votre vol"
+
+#: app/templates/config/notifications.html
+msgid "A pilot found a flight you logged already in the system and asks to add it to their own logbook."
+msgstr "Un pilote a trouvé un vol que vous avez déjà enregistré et demande à l’ajouter à son propre carnet de vol."
+
+#: app/templates/flights/flight_form.html
+msgid "You already asked %(names)s to add you to this flight — it appears in your logbook once they approve."
+msgstr "Vous avez déjà demandé à %(names)s de vous ajouter à ce vol — il apparaîtra dans votre carnet de vol dès son approbation."
+
+#: app/templates/flights/flight_form.html
+msgid "Were you on this flight? Ask %(names)s to add you to it instead of logging it twice."
+msgstr "Étiez-vous sur ce vol ? Demandez à %(names)s de vous y ajouter plutôt que de l’enregistrer deux fois."
+
+#: app/templates/flights/flight_form.html
+msgid "Ask to be added to this flight"
+msgstr "Demander à être ajouté(e) à ce vol"
+
+#: app/templates/partials/_crew_claims.html
+msgid "Pilots asking to be added to your flights"
+msgstr "Pilotes demandant à être ajoutés à vos vols"
+
+#: app/templates/partials/_crew_claims.html
+msgid "These pilots say they were on a flight you logged. Approving adds the flight to their pilot logbook."
+msgstr "Ces pilotes indiquent avoir participé à un vol que vous avez enregistré. Approuver ajoute le vol à leur carnet de vol."
+
+#: app/flights/crew_invites.py
+msgid "%(name)s approved your request"
+msgstr "%(name)s a approuvé votre demande"

@@ -1146,13 +1146,27 @@ class CrewInviteStatus:
     ALL: ClassVar[list[str]] = [PENDING, ACCEPTED, DECLINED, CANCELLED]
 
 
-class FlightCrewInvite(db.Model):
-    """A pilot named another pilot of the same tenant in one of a flight's
-    crew slots; that pilot confirms (their user id is then written into the
-    slot, and the flight appears in their logbook) or declines.
+class CrewInviteKind:
+    # The logger named a pilot; that pilot confirms or declines.
+    INVITE = "invite"
+    # A pilot found the flight already logged (duplicate warning) and asks to
+    # be added; the pilot who owns the flight's shared fields approves.
+    CLAIM = "claim"
+    ALL: ClassVar[list[str]] = [INVITE, CLAIM]
 
-    The slot's user id is deliberately *not* set while the invite is pending,
-    so an unconfirmed flight never counts towards the invited pilot's totals
+
+class FlightCrewInvite(db.Model):
+    """A request to link ``invited_user_id`` into one of a flight's crew slots.
+
+    ``kind`` says who answers it: for an invite (a pilot named another pilot
+    of the same tenant) the invited pilot confirms or declines; for a claim (a
+    pilot asks to be added to a flight someone else logged) the pilot who owns
+    the flight's shared fields approves or declines. Either way, on acceptance
+    the user id is written into the slot and the flight appears in that
+    pilot's logbook.
+
+    The slot's user id is deliberately *not* set while the request is
+    pending, so an unconfirmed flight never counts towards that pilot's totals
     or currency.
     """
 
@@ -1178,6 +1192,15 @@ class FlightCrewInvite(db.Model):
         default=CrewInviteStatus.PENDING,
         server_default=CrewInviteStatus.PENDING,
     )
+    kind = db.Column(
+        db.String(16),
+        nullable=False,
+        default=CrewInviteKind.INVITE,
+        server_default=CrewInviteKind.INVITE,
+    )
+    # Claims only: the second-crew role the claiming pilot says they flew as,
+    # applied on approval when the flight doesn't name one yet.
+    requested_role = db.Column(db.String(16), nullable=True)  # CrewRole constant
     created_at = db.Column(
         db.DateTime(timezone=True),
         nullable=False,
@@ -3274,6 +3297,7 @@ class NotificationType:
     CREW_INVITE_ANSWERED = "crew_invite_answered"
     SHARED_FLIGHT_CHANGED = "shared_flight_changed"
     FLIGHT_CORRECTION = "flight_correction"
+    CREW_CLAIM = "crew_claim"
 
     ALL: ClassVar[list[str]] = [
         GROUNDING_SNAG_OPENED,
@@ -3298,6 +3322,7 @@ class NotificationType:
         CREW_INVITE_ANSWERED,
         SHARED_FLIGHT_CHANGED,
         FLIGHT_CORRECTION,
+        CREW_CLAIM,
     ]
 
     # System defaults — coded constants; DB only stores per-user or per-tenant overrides
@@ -3324,6 +3349,7 @@ class NotificationType:
         CREW_INVITE_ANSWERED: {"enabled": True, "threshold_days": None},
         SHARED_FLIGHT_CHANGED: {"enabled": True, "threshold_days": None},
         FLIGHT_CORRECTION: {"enabled": True, "threshold_days": None},
+        CREW_CLAIM: {"enabled": True, "threshold_days": None},
     }
 
     # Capability flags required — user sees this type in their prefs if they have >= 1
@@ -3352,6 +3378,7 @@ class NotificationType:
         CREW_INVITE_ANSWERED: ["is_pilot"],
         SHARED_FLIGHT_CHANGED: ["is_pilot"],
         FLIGHT_CORRECTION: ["is_pilot"],
+        CREW_CLAIM: ["is_pilot"],
     }
 
     # Types that have a configurable days-ahead threshold
