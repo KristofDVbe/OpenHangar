@@ -324,14 +324,8 @@ def index() -> ResponseReturnValue:
         UserInvitation,
     )
     from sqlalchemy import func  # pyright: ignore[reportMissingImports]
+    from users.routes import ROLE_LABELS  # pyright: ignore[reportMissingImports]
 
-    _role_labels = {
-        Role.ADMIN: "Admin",
-        Role.OWNER: "Owner",
-        Role.PILOT: "Pilot / Renter",
-        Role.MAINTENANCE: "Maintenance",
-        Role.VIEWER: "Viewer",
-    }
     tu_self = TenantUser.query.filter_by(user_id=session["user_id"]).first()
     tid = tu_self.tenant_id if tu_self else None
     user_counts = []
@@ -346,7 +340,7 @@ def index() -> ResponseReturnValue:
         )
         counts_by_role = dict(results)
         user_counts = [
-            (_role_labels[r], counts_by_role[r])
+            (ROLE_LABELS[r], counts_by_role[r])
             for r in Role
             if counts_by_role.get(r, 0) > 0
         ]
