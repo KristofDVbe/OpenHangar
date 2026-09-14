@@ -771,6 +771,10 @@ def crew_entry(flight_id: int) -> ResponseReturnValue:
 
     if request.method == "POST":
         action = request.form.get("action")
+        # flask.abort() always raises — the `else` branch below never falls
+        # through — but static analysis doesn't know that, so this is
+        # initialized unconditionally rather than relying on it.
+        errors: list[str] = []
         if action == "personal":
             errors = apply_personal_fields(fe, slot, request.form)
             if not errors:
