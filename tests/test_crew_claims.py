@@ -120,7 +120,8 @@ class TestClaimFromDuplicateWarning:
         html = resp.data.decode()
         assert "You already asked Olga Owner" in html
         assert 'value="claim"' not in html
-        resp, _mock = _log_same_flight(client, acid, duplicate_action="claim")
+        # Re-posting the claim action doesn't create a second request.
+        _log_same_flight(client, acid, duplicate_action="claim")
         assert len(_claims(app)) == 1
 
     def test_approve_adds_claimant_to_flight(self, app, client):
