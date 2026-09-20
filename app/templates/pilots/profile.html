@@ -85,7 +85,8 @@
     {% endif %}
 
     <div class="ac-form-card p-0">
-      <table class="table table-hover mb-0 oh-fs-09">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 oh-fs-09">
         <thead class="table-light">
           <tr>
             <th class="ps-3">{{ _('Type') }}</th>
@@ -139,7 +140,8 @@
           </tr>
           {% endfor %}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
     <p class="form-text mt-1">
       {{ _('%(ref)s: 3 landings (day or night) in the last 90 days to carry passengers; 1 night landing in the last 90 days to carry passengers at night. Both per ICAO aircraft type.', ref='EASA FCL.060') }}
@@ -161,7 +163,8 @@
 
     {% if pilot_docs %}
     <div class="ac-form-card p-0">
-      <table class="table table-hover mb-0 oh-fs-09">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 oh-fs-09">
         <tbody>
           {% for doc in pilot_docs %}
           {% set ext = doc.original_filename.rsplit('.', 1)[-1].lower() if '.' in doc.original_filename else '' %}
@@ -201,13 +204,17 @@
             </td>
             <td class="pe-3 text-end align-middle text-nowrap">
               {% if doc.is_image or doc.is_pdf %}
-              <button type="button" class="btn btn-ac-secondary btn-xs"
+              <button type="button" class="btn btn-ac-secondary btn-xs me-1"
                       data-bs-toggle="modal" data-bs-target="#docModal"
                       data-url="{{ url_for('flights.serve_upload', filename=doc.filename) }}"
                       data-mime="{{ doc.mime_type or '' }}"
                       data-title="{{ doc.title or doc.original_filename }}">
                 <i class="bi bi-eye me-1"></i>{{ _('View') }}
               </button>
+              <a href="{{ url_for('flights.serve_upload', filename=doc.filename) }}"
+                 class="btn btn-ac-secondary btn-xs" download>
+                <i class="bi bi-download me-1"></i>{{ _('Download') }}
+              </a>
               {% else %}
               <a href="{{ url_for('flights.serve_upload', filename=doc.filename) }}"
                  class="btn btn-ac-secondary btn-xs" download>
@@ -226,7 +233,8 @@
           </tr>
           {% endfor %}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
     {% else %}
     <p class="text-muted oh-fs-09">

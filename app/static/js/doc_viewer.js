@@ -9,20 +9,19 @@
       var mime = btn.getAttribute('data-mime') || '';
       var title = btn.getAttribute('data-title') || '';
       document.getElementById('docModalLabel').textContent = title;
+      var downloadLink = document.getElementById('docModalDownload');
+      if (downloadLink) downloadLink.href = url;
       var body = document.getElementById('docModalBody');
       body.innerHTML = '';
       if (mime.startsWith('image/')) {
         var img = document.createElement('img');
         img.src = url;
-        img.className = 'img-fluid d-block mx-auto p-2';
-        img.style.maxHeight = '80vh';
+        img.className = 'doc-modal-image img-fluid d-block mx-auto p-2';
         body.appendChild(img);
       } else {
         var iframe = document.createElement('iframe');
         iframe.src = url;
-        iframe.style.width = '100%';
-        iframe.style.height = '80vh';
-        iframe.style.border = 'none';
+        iframe.className = 'doc-modal-frame';
         body.appendChild(iframe);
       }
     });

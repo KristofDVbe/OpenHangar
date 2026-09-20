@@ -3,7 +3,7 @@ Tests for HTTP security headers and session cookie configuration.
 
 Verifies that every response carries the headers added in create_app():
   Content-Security-Policy (nonce-based, script-src strict)
-  X-Frame-Options: DENY
+  X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
@@ -48,9 +48,14 @@ class TestSecurityHeaders:
         n2 = _CSP_NONCE_RE.search(r2)
         assert n1 and n2 and n1.group() != n2.group()
 
-    def test_csp_frame_ancestors_none(self, client):
+    def test_csp_frame_ancestors_self(self, client):
+        """'self', not 'none' — the doc/photo preview modal (doc_viewer.js)
+        embeds /uploads/<file> in a same-origin <iframe> on purpose; 'none'
+        would also block that (see app/init.py's _security_headers comment).
+        'self' still fully blocks a third-party site from framing the app."""
         csp = client.get("/health").headers.get("Content-Security-Policy", "")
-        assert "frame-ancestors 'none'" in csp
+        assert "frame-ancestors 'self'" in csp
+        assert "frame-ancestors 'none'" not in csp
 
     def test_csp_style_src_elem_no_unsafe_inline(self, client):
         csp = client.get("/health").headers.get("Content-Security-Policy", "")
@@ -74,7 +79,7 @@ class TestSecurityHeaders:
 
     def test_x_frame_options(self, client):
         resp = client.get("/health")
-        assert resp.headers.get("X-Frame-Options") == "DENY"
+        assert resp.headers.get("X-Frame-Options") == "SAMEORIGIN"
 
     def test_x_content_type_options(self, client):
         resp = client.get("/health")
@@ -91,7 +96,7 @@ class TestSecurityHeaders:
     def test_headers_present_on_html_page(self, client):
         """Headers are set on HTML responses too, not just JSON endpoints."""
         resp = client.get("/login")
-        assert resp.headers.get("X-Frame-Options") == "DENY"
+        assert resp.headers.get("X-Frame-Options") == "SAMEORIGIN"
         assert resp.headers.get("X-Content-Type-Options") == "nosniff"
         assert resp.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
         assert resp.headers.get("Permissions-Policy") == _PERMISSIONS_POLICY
