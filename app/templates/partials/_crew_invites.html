@@ -36,11 +36,11 @@
             <td class="pe-3 text-end text-nowrap">
               <form method="post" action="{{ url_for('flights.accept_crew_invite', invite_id=inv.id) }}" class="d-inline">
                 <input type="hidden" name="next" value="{{ crew_invites_next }}">
-                <button type="submit" class="btn btn-sm btn-success py-0 px-2">{{ _('Confirm') }}</button>
+                <button type="submit" class="btn btn-sm btn-success px-2">{{ _('Confirm') }}</button>
               </form>
               <form method="post" action="{{ url_for('flights.decline_crew_invite', invite_id=inv.id) }}" class="d-inline ms-1">
                 <input type="hidden" name="next" value="{{ crew_invites_next }}">
-                <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2">{{ _('Decline') }}</button>
+                <button type="submit" class="btn btn-sm btn-outline-danger px-2">{{ _('Decline') }}</button>
               </form>
             </td>
           </tr>
