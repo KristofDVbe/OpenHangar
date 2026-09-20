@@ -411,6 +411,24 @@ nav.navbar.mayday #oh-mayday-banner {
 @media (max-width: 575.98px) {
   .doc-modal-frame  { height: 100%; }
   .doc-modal-image  { max-height: 100%; }
+
+  /* Bootstrap's -sm form controls are 14px, which is under the 16px iOS
+     Safari uses to decide whether to zoom the viewport on focus, and their
+     default height sits under the ~40-44px touch target guidelines. Only
+     override on phones — the compact look is intentional on desktop/tablet,
+     where focus-zoom doesn't happen and a mouse pointer is precise. */
+  .form-select-sm, .form-control-sm {
+    font-size: 1rem;
+    min-height: 2.5rem;
+  }
+
+  /* Icon-only .btn-xs action buttons (edit/delete/download in table rows)
+     are ~31px tall by default — bump to a touch-friendly minimum without
+     changing their footprint on larger screens. */
+  .btn-xs {
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+  }
 }
 .oh-br-4     { border-radius: 4px; }
 .oh-br-6     { border-radius: 6px; }

@@ -20,31 +20,58 @@
       <a href="{{ url_for('flights.log_flight') }}" class="btn btn-ac-primary">
         <i class="bi bi-plus-circle me-1"></i>{{ _('Add Entry') }}
       </a>
-      <a href="{{ url_for('offline.pilot_workbench') }}" class="btn btn-ac-ghost">
+      {# On phones these secondary actions collapse into the "More" dropdown
+         below instead of stacking across several rows above the logbook
+         content. #}
+      <a href="{{ url_for('offline.pilot_workbench') }}" class="btn btn-ac-ghost d-none d-md-inline-block">
         <i class="bi bi-cloud-arrow-down me-1"></i>{{ _('Offline workbench') }}
       </a>
-      <a href="{{ url_for('pilots.import_upload') }}" class="btn btn-ac-ghost">
+      <a href="{{ url_for('pilots.import_upload') }}" class="btn btn-ac-ghost d-none d-md-inline-block">
         <i class="bi bi-cloud-upload me-1"></i>{{ _('Import') }}
       </a>
-      <a href="{{ url_for('pilots.pilot_gps_import_upload') }}" class="btn btn-ac-ghost">
+      <a href="{{ url_for('pilots.pilot_gps_import_upload') }}" class="btn btn-ac-ghost d-none d-md-inline-block">
         <i class="bi bi-geo-alt me-1"></i>{{ _('Import GPS') }}
       </a>
-      <a href="{{ url_for('pilots.pilot_tracks') }}" class="btn btn-ac-ghost">
+      <a href="{{ url_for('pilots.pilot_tracks') }}" class="btn btn-ac-ghost d-none d-md-inline-block">
         <i class="bi bi-map me-1"></i>{{ _('Tracks') }}
       </a>
-      <a href="{{ url_for('pilots.pilot_stats') }}" class="btn btn-ac-ghost">
+      <a href="{{ url_for('pilots.pilot_stats') }}" class="btn btn-ac-ghost d-none d-md-inline-block">
         <i class="bi bi-bar-chart-line me-1"></i>{{ _('Statistics') }}
       </a>
       <a href="{{ url_for('pilots.logbook', order=other_order, per_page=per_page) }}"
-         class="btn btn-ac-ghost" title="{{ other_order_label }}">
+         class="btn btn-ac-ghost d-none d-md-inline-block" title="{{ other_order_label }}">
         <i class="bi {{ other_order_icon }} me-1"></i>{{ other_order_label }}
       </a>
-      <a href="{{ url_for('pilots.profile') }}" class="btn btn-ac-ghost">
+      <a href="{{ url_for('pilots.profile') }}" class="btn btn-ac-ghost d-none d-md-inline-block">
         <i class="bi bi-person-badge me-1"></i>{{ _('Pilot Profile') }}
       </a>
-      <a href="{{ url_for('pilots.minimums_view') }}" class="btn btn-ac-ghost">
+      <a href="{{ url_for('pilots.minimums_view') }}" class="btn btn-ac-ghost d-none d-md-inline-block">
         <i class="bi bi-clipboard2-check me-1"></i>{{ _('Personal minimums') }}
       </a>
+      <div class="dropdown d-md-none">
+        <button class="btn btn-ac-ghost dropdown-toggle" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-three-dots me-1"></i>{{ _('More') }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{{ url_for('offline.pilot_workbench') }}">
+            <i class="bi bi-cloud-arrow-down me-2"></i>{{ _('Offline workbench') }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('pilots.import_upload') }}">
+            <i class="bi bi-cloud-upload me-2"></i>{{ _('Import') }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('pilots.pilot_gps_import_upload') }}">
+            <i class="bi bi-geo-alt me-2"></i>{{ _('Import GPS') }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('pilots.pilot_tracks') }}">
+            <i class="bi bi-map me-2"></i>{{ _('Tracks') }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('pilots.pilot_stats') }}">
+            <i class="bi bi-bar-chart-line me-2"></i>{{ _('Statistics') }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('pilots.logbook', order=other_order, per_page=per_page) }}">
+            <i class="bi {{ other_order_icon }} me-2"></i>{{ other_order_label }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('pilots.profile') }}">
+            <i class="bi bi-person-badge me-2"></i>{{ _('Pilot Profile') }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('pilots.minimums_view') }}">
+            <i class="bi bi-clipboard2-check me-2"></i>{{ _('Personal minimums') }}</a></li>
+        </ul>
+      </div>
     </div>
   </div>
 

@@ -23,24 +23,46 @@
         <i class="bi bi-plus-circle me-1"></i>{{ _('Log a flight') }}
       </a>
       <a href="{{ url_for('aircraft.gps_import_upload', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-secondary">
+         class="btn btn-ac-secondary d-none d-md-inline-block">
         <i class="bi bi-geo-alt me-1"></i>{{ _('Import GPS') }}
       </a>
       <a href="{{ url_for('offline.workbench', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-secondary">
+         class="btn btn-ac-secondary d-none d-md-inline-block">
         <i class="bi bi-cloud-arrow-down me-1"></i>{{ _('Offline workbench') }}
       </a>
       {% endif %}
       {% if is_owner %}
       <a href="{{ url_for('flights.airframe_import_upload', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-secondary">
+         class="btn btn-ac-secondary d-none d-md-inline-block">
         <i class="bi bi-cloud-upload me-1"></i>{{ _('Import history') }}
       </a>
       {% endif %}
       <a href="{{ url_for('aircraft.flight_tracks', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-ghost">
+         class="btn btn-ac-ghost d-none d-md-inline-block">
         <i class="bi bi-map me-1"></i>{{ _('Tracks') }}
       </a>
+      {% if is_pilot or is_owner %}
+      <div class="dropdown d-md-none">
+        <button class="btn btn-ac-ghost dropdown-toggle" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-three-dots me-1"></i>{{ _('More') }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          {% if is_pilot %}
+          <li><a class="dropdown-item" href="{{ url_for('aircraft.gps_import_upload', aircraft_id=aircraft.id) }}">
+            <i class="bi bi-geo-alt me-2"></i>{{ _('Import GPS') }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('offline.workbench', aircraft_id=aircraft.id) }}">
+            <i class="bi bi-cloud-arrow-down me-2"></i>{{ _('Offline workbench') }}</a></li>
+          {% endif %}
+          {% if is_owner %}
+          <li><a class="dropdown-item" href="{{ url_for('flights.airframe_import_upload', aircraft_id=aircraft.id) }}">
+            <i class="bi bi-cloud-upload me-2"></i>{{ _('Import history') }}</a></li>
+          {% endif %}
+          <li><a class="dropdown-item" href="{{ url_for('aircraft.flight_tracks', aircraft_id=aircraft.id) }}">
+            <i class="bi bi-map me-2"></i>{{ _('Tracks') }}</a></li>
+        </ul>
+      </div>
+      {% endif %}
       <a href="{{ url_for('aircraft.detail', aircraft_id=aircraft.id) }}"
          class="btn btn-ac-ghost">
         <i class="bi bi-arrow-left me-1"></i>{{ aircraft.registration }}

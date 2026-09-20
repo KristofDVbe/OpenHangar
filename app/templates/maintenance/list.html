@@ -24,22 +24,36 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
       {% if is_maint %}
-      <a href="{{ url_for('maintenance.import_amp_upload', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-ghost">
-        <i class="bi bi-cloud-upload me-1"></i>{{ _('Import from spreadsheet') }}
-      </a>
-      <a href="{{ url_for('maintenance.edit_amp_declaration', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-ghost">
-        <i class="bi bi-file-earmark-text me-1"></i>{{ _('AMP declaration') }}
-      </a>
-      <a href="{{ url_for('maintenance.export_amp', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-ghost">
-        <i class="bi bi-file-earmark-pdf me-1"></i>{{ _('Export AMP') }}
-      </a>
       <a href="{{ url_for('maintenance.new_trigger', aircraft_id=aircraft.id) }}"
          class="btn btn-ac-primary">
         <i class="bi bi-plus-circle me-1"></i>{{ _('Add item') }}
       </a>
+      <a href="{{ url_for('maintenance.import_amp_upload', aircraft_id=aircraft.id) }}"
+         class="btn btn-ac-ghost d-none d-md-inline-block">
+        <i class="bi bi-cloud-upload me-1"></i>{{ _('Import from spreadsheet') }}
+      </a>
+      <a href="{{ url_for('maintenance.edit_amp_declaration', aircraft_id=aircraft.id) }}"
+         class="btn btn-ac-ghost d-none d-md-inline-block">
+        <i class="bi bi-file-earmark-text me-1"></i>{{ _('AMP declaration') }}
+      </a>
+      <a href="{{ url_for('maintenance.export_amp', aircraft_id=aircraft.id) }}"
+         class="btn btn-ac-ghost d-none d-md-inline-block">
+        <i class="bi bi-file-earmark-pdf me-1"></i>{{ _('Export AMP') }}
+      </a>
+      <div class="dropdown d-md-none">
+        <button class="btn btn-ac-ghost dropdown-toggle" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-three-dots me-1"></i>{{ _('More') }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{{ url_for('maintenance.import_amp_upload', aircraft_id=aircraft.id) }}">
+            <i class="bi bi-cloud-upload me-2"></i>{{ _('Import from spreadsheet') }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('maintenance.edit_amp_declaration', aircraft_id=aircraft.id) }}">
+            <i class="bi bi-file-earmark-text me-2"></i>{{ _('AMP declaration') }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('maintenance.export_amp', aircraft_id=aircraft.id) }}">
+            <i class="bi bi-file-earmark-pdf me-2"></i>{{ _('Export AMP') }}</a></li>
+        </ul>
+      </div>
       {% endif %}
       <a href="{{ url_for('aircraft.detail', aircraft_id=aircraft.id) }}"
          class="btn btn-ac-ghost">

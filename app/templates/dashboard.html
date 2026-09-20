@@ -49,7 +49,8 @@
       </div>
     </div>
     <div class="dash-panel-body p-2">
-      <table class="fleet-cal-table">
+      <div class="table-responsive">
+        <table class="fleet-cal-table">
         <thead>
           <tr>
             {% for day_name in [_('Mon'), _('Tue'), _('Wed'), _('Thu'), _('Fri'), _('Sat'), _('Sun')] %}
@@ -100,7 +101,8 @@
           </tr>
           {% endfor %}
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -458,7 +460,8 @@
         </div>
         {% if aircraft %}
         <div class="dash-panel-body p-0">
-          <table class="table table-hover mb-0 oh-fs-09">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 oh-fs-09">
             <tbody>
               {% for ac in aircraft %}
               <tr class="clickable-row" data-href="{{ url_for('aircraft.detail', aircraft_id=ac.id) }}">
@@ -489,11 +492,13 @@
               </tr>
               {% endfor %}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
         {% elif recent_pilot_entries %}
         <div class="dash-panel-body p-0">
-          <table class="table table-hover mb-0 oh-fs-09">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 oh-fs-09">
             <tbody>
               {% for e in recent_pilot_entries %}
               <tr class="clickable-row" data-href="{{ url_for('pilots.logbook') }}">
@@ -508,7 +513,8 @@
               </tr>
               {% endfor %}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
         {% else %}
         <div class="dash-panel-body dash-empty">
@@ -538,7 +544,8 @@
         </div>
         {% if grounding_snags or urgent_maintenance %}
         <div class="dash-panel-body p-0">
-          <table class="table table-hover mb-0 oh-fs-09">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 oh-fs-09">
             <tbody>
               {% for snag, ac in grounding_snags %}
               <tr class="clickable-row" data-href="{{ url_for('snags.list_snags', aircraft_id=ac.id) }}">
@@ -573,7 +580,8 @@
               </tr>
               {% endfor %}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
         {% else %}
         <div class="dash-panel-body dash-empty">
@@ -596,7 +604,8 @@
         </div>
         {% if recent_flights %}
         <div class="dash-panel-body p-0">
-          <table class="table table-hover mb-0 oh-fs-09">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 oh-fs-09">
             <tbody>
               {% for f in recent_flights %}
               {% set dur = f.flight_time | float if f.flight_time is not none else
@@ -620,7 +629,8 @@
               </tr>
               {% endfor %}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
         {% else %}
         <div class="dash-panel-body dash-empty">
@@ -743,7 +753,8 @@
         </div>
         {% if pending_reservations %}
         <div class="dash-panel-body p-0">
-          <table class="table table-hover mb-0 oh-fs-088">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 oh-fs-088">
             <thead class="table-light">
               <tr>
                 <th class="ps-3">{{ _('Aircraft') }}</th>
@@ -779,7 +790,8 @@
               </tr>
               {% endfor %}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
         {% else %}
         <div class="dash-panel-body dash-empty">
