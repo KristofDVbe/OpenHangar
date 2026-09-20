@@ -104,7 +104,8 @@
         {% if row.lines %}
         <details>
           <summary class="oh-fs-08 text-muted">{{ _('Recent entries') }}</summary>
-          <table class="table table-sm oh-fs-08 mb-0 mt-2">
+          <div class="table-responsive">
+            <table class="table table-sm oh-fs-08 mb-0 mt-2">
             <tbody>
               {% for item in row.lines %}
               <tr>
@@ -122,7 +123,8 @@
               </tr>
               {% endfor %}
             </tbody>
-          </table>
+            </table>
+          </div>
         </details>
         {% endif %}
       </div>
@@ -165,7 +167,8 @@
 
     {% if snapshot_groups %}
     {% for valuation_date, snaps in snapshot_groups %}
-    <table class="table table-sm oh-fs-09 mb-4">
+    <div class="table-responsive">
+      <table class="table table-sm oh-fs-09 mb-4">
       <caption class="caption-top oh-fs-08 fw-semibold text-body">
         {{ valuation_date.strftime('%Y-%m-%d') }}
         {% if snaps[0].note %}<span class="text-muted">— {{ snaps[0].note }}</span>{% endif %}
@@ -186,7 +189,8 @@
         </tr>
         {% endfor %}
       </tbody>
-    </table>
+      </table>
+    </div>
     {% endfor %}
     {% else %}
     <p class="text-muted mb-0 oh-fs-09">{{ _('No valuation snapshots recorded yet.') }}</p>

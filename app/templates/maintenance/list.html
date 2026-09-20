@@ -68,7 +68,8 @@
     {% endif %}
   </div>
   <div class="ac-form-card p-0 mb-3">
-    <table class="table table-hover mb-0 oh-fs-09">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 oh-fs-09">
       <thead class="oh-bg-light">
         <tr>
           <th class="ps-3">{{ _('Item') }}</th>
@@ -176,7 +177,8 @@
         </tr>
         {% endfor %}
       </tbody>
-    </table>
+      </table>
+    </div>
   </div>
   {% endfor %}
 

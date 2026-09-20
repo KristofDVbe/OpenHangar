@@ -543,9 +543,16 @@ def create_app() -> Flask:
             f"object-src 'none'; "
             f"base-uri 'self'; "
             f"form-action 'self'; "
-            f"frame-ancestors 'none';"
+            # 'self' (not 'none'): the app frames its own same-origin content
+            # on purpose — the document/photo preview modal (doc_viewer.js)
+            # embeds /uploads/<file> in an <iframe>. A blanket 'none' also
+            # applies to that response and silently breaks that iframe (no
+            # console-visible failure beyond a CSP violation) rather than
+            # merely stopping a third-party site from framing OpenHangar,
+            # which is the actual threat 'self' still fully blocks.
+            f"frame-ancestors 'self';"
         )
-        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = (

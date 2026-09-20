@@ -401,6 +401,17 @@ nav.navbar.mayday #oh-mayday-banner {
 .oh-mxh-56   { max-height: 56px; }
 .oh-mxh-200  { max-height: 200px; }
 .oh-mnh-60vh { min-height: 60vh; }
+
+/* Document/photo preview modal (doc_viewer.js). Below the sm breakpoint the
+   modal itself goes full-screen (modal-fullscreen-sm-down in
+   _doc_viewer_modal.html), so both fill 100% of the flexed modal-body height
+   instead of a fixed 80vh that would leave most of a phone screen empty. */
+.doc-modal-frame { width: 100%; height: 80vh; border: 0; display: block; }
+.doc-modal-image { max-height: 80vh; }
+@media (max-width: 575.98px) {
+  .doc-modal-frame  { height: 100%; }
+  .doc-modal-image  { max-height: 100%; }
+}
 .oh-br-4     { border-radius: 4px; }
 .oh-br-6     { border-radius: 6px; }
 

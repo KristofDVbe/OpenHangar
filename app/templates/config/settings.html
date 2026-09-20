@@ -272,7 +272,8 @@
 
   {% if records %}
   <div class="ac-form-card p-0">
-    <table class="table table-hover mb-0 oh-fs-09">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 oh-fs-09">
       <thead class="table-group-divider">
         <tr>
           <th class="ps-3">{{ _('File') }}</th>
@@ -307,7 +308,8 @@
         </tr>
         {% endfor %}
       </tbody>
-    </table>
+      </table>
+    </div>
   </div>
   {% if backup_extra > 0 %}
   <p class="text-muted mt-2 mb-0 oh-fs-082">

@@ -123,7 +123,8 @@
 
 {% if not (_compact_mode is defined and _compact_mode) %}
 <div class="ac-form-card p-0">
-  <table class="table table-hover mb-0 oh-fs-09">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 oh-fs-09">
     <thead>
       <tr>
         <th class="ps-3">{{ _('Date') }}</th>
@@ -150,7 +151,8 @@
       </tr>
       {% endfor %}
     </tbody>
-  </table>
+    </table>
+  </div>
 </div>
 {% endif %}
 

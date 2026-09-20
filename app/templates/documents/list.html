@@ -72,7 +72,8 @@
 
   {% if docs %}
   <div class="ac-form-card p-0">
-    <table class="table table-hover mb-0 oh-fs-09">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 oh-fs-09">
       <thead class="table-light">
         <tr>
           <th class="ps-3 oh-w-2rem"></th>
@@ -172,13 +173,17 @@
           </td>
           <td class="pe-3 text-end align-middle text-nowrap">
             {% if doc.is_image or doc.is_pdf %}
-            <button type="button" class="btn btn-ac-secondary btn-xs"
+            <button type="button" class="btn btn-ac-secondary btn-xs me-1"
                     data-bs-toggle="modal" data-bs-target="#docModal"
                     data-url="{{ url_for('flights.serve_upload', filename=doc.filename) }}"
                     data-mime="{{ doc.mime_type or '' }}"
                     data-title="{{ doc.title or doc.original_filename }}">
               <i class="bi bi-eye me-1"></i>{{ _('View') }}
             </button>
+            <a href="{{ url_for('flights.serve_upload', filename=doc.filename) }}"
+               class="btn btn-ac-secondary btn-xs" download>
+              <i class="bi bi-download me-1"></i>{{ _('Download') }}
+            </a>
             {% else %}
             <a href="{{ url_for('flights.serve_upload', filename=doc.filename) }}"
                class="btn btn-ac-secondary btn-xs" download>
@@ -203,7 +208,8 @@
         </tr>
         {% endfor %}
       </tbody>
-    </table>
+      </table>
+    </div>
   </div>
 
   {% else %}

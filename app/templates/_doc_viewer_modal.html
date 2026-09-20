@@ -1,10 +1,18 @@
-{# ── Inline document viewer modal ─────────────────────────────────────────── #}
+{# ── Inline document viewer modal ─────────────────────────────────────────────
+   Fullscreen below the sm breakpoint: a fixed ~60vh box left little usable
+   height for a PDF on a phone, and previews go full-height too (see
+   doc_viewer.js). Same centered dialog as before on larger screens. #}
 <div class="modal fade" id="docModal" tabindex="-1" aria-labelledby="docModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
+  <div class="modal-dialog modal-xl modal-dialog-centered modal-fullscreen-sm-down">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="docModalLabel"></h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+        <h5 class="modal-title text-truncate" id="docModalLabel"></h5>
+        <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
+          <a href="#" id="docModalDownload" class="btn btn-ac-secondary btn-sm text-nowrap" download>
+            <i class="bi bi-download me-1"></i>{{ _('Download') }}
+          </a>
+          <button type="button" class="btn-close m-0" data-bs-dismiss="modal" aria-label="{{ _('Close') }}"></button>
+        </div>
       </div>
       <div class="modal-body p-0 oh-mnh-60vh" id="docModalBody">
       </div>

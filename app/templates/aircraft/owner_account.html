@@ -40,7 +40,8 @@
   </div>
 
   <div class="ac-form-card p-0">
-    <table class="table table-hover mb-0 oh-fs-09">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 oh-fs-09">
       <thead class="table-light">
         <tr>
           <th>{{ _('Date') }}</th>
@@ -73,7 +74,8 @@
           <td class="text-end fw-semibold">{{ '%.2f'|format(statement.closing_balance|float) }}</td>
         </tr>
       </tbody>
-    </table>
+      </table>
+    </div>
   </div>
 
 </div>
