@@ -106,7 +106,10 @@ tr.clickable-row { cursor: pointer; }
 }
 
 /* ── Reservations calendar ────────────────────────────────────────────── */
-.res-cal-table { table-layout: fixed; width: 100%; border-collapse: separate; border-spacing: 2px; }
+/* min-width: same reasoning as .fleet-cal-table in dashboard.css — keeps
+   day cells legible on phones by scrolling (via the .table-responsive
+   wrapper) instead of shrinking every column below a readable width. */
+.res-cal-table { table-layout: fixed; width: 100%; min-width: 630px; border-collapse: separate; border-spacing: 2px; }
 .res-cal-table th {
   text-align: center; font-size: .78rem; font-weight: 600;
   color: var(--oh-ink); padding: 6px 2px; text-transform: uppercase; letter-spacing: .04em;

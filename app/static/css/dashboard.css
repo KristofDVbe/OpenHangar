@@ -186,6 +186,11 @@ a.stat-card-link:hover .stat-card {
 .fleet-cal-table {
   table-layout: fixed;
   width: 100%;
+  /* 7 columns x 90px: below this, day cells get too narrow to read the
+     date number or a reservation chip. Paired with the .table-responsive
+     wrapper around it, the grid scrolls horizontally on phones instead of
+     squeezing every column unreadably thin. */
+  min-width: 630px;
   border-collapse: separate;
   border-spacing: 2px;
 }
