@@ -85,7 +85,8 @@
 
   {# ── Logbook table — detailed view, see components.css ───────────────────── #}
   <div class="ac-form-card p-0 oh-logbook-detailed" data-oh-logbook-detailed>
-    <table class="table table-hover mb-0 oh-fs-088">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 oh-fs-088">
       <thead class="oh-bg-light">
         <tr>
           <th class="ps-3">{{ _('Date') }}</th>
@@ -189,7 +190,8 @@
           <td colspan="4"></td>
         </tr>
       </tfoot>
-    </table>
+      </table>
+    </div>
   </div>
 
   {% else %}

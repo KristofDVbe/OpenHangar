@@ -185,7 +185,8 @@
         <hr class="my-4">
         <h2 class="section-title">{{ _('Revision history (block 10)') }}</h2>
         {% if revisions %}
-        <table class="table table-sm mb-3">
+        <div class="table-responsive">
+          <table class="table table-sm mb-3">
           <thead>
             <tr>
               <th>{{ _('Rev number') }}</th>
@@ -220,7 +221,8 @@
             </tr>
             {% endfor %}
           </tbody>
-        </table>
+          </table>
+        </div>
         {% else %}
         <p class="text-muted oh-fs-09">{{ _('No revisions recorded yet.') }}</p>
         {% endif %}

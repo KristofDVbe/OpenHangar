@@ -46,7 +46,8 @@
   {% if maintenance_summary %}
   <div class="oh-card">
     <div class="oh-section-title"><i class="bi bi-tools me-2"></i>{{ _('Maintenance') }}</div>
-    <table class="table table-sm mb-0 oh-fs-088">
+    <div class="table-responsive">
+      <table class="table table-sm mb-0 oh-fs-088">
       <tbody>
         {% for t, status in maintenance_summary | sort(attribute='1') %}
         <tr>
@@ -69,7 +70,8 @@
         </tr>
         {% endfor %}
       </tbody>
-    </table>
+      </table>
+    </div>
   </div>
   {% endif %}
 
@@ -77,7 +79,8 @@
   {% if token.access_level == 'full' and recent_flights %}
   <div class="oh-card">
     <div class="oh-section-title"><i class="bi bi-book me-2"></i>{{ _('Recent Flights') }}</div>
-    <table class="table table-sm mb-0 oh-fs-088">
+    <div class="table-responsive">
+      <table class="table table-sm mb-0 oh-fs-088">
       <tbody>
         {% for f in recent_flights %}
         {% set duration = f.flight_time | float if f.flight_time is not none else
@@ -91,7 +94,8 @@
         </tr>
         {% endfor %}
       </tbody>
-    </table>
+      </table>
+    </div>
   </div>
   {% endif %}
 
