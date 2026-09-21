@@ -1,4 +1,5 @@
 import json
+import logging
 import math
 import os
 import uuid as _uuid_mod
@@ -80,6 +81,7 @@ from aircraft.gps_import import (  # pyright: ignore[reportMissingImports]
 )
 
 aircraft_bp = Blueprint("aircraft", __name__, url_prefix="/aircraft")
+log = logging.getLogger(__name__)
 
 _OWNER_ROLES = (Role.ADMIN, Role.OWNER)
 _PILOT_ROLES = (Role.ADMIN, Role.OWNER, Role.PILOT)
@@ -2737,6 +2739,51 @@ def _photo_folder(app: Any, tenant_slug: str, safe_reg: str) -> str:
     return os.path.join(folder, tenant_slug, safe_reg, "photos")
 
 
+_PHOTO_THUMB_MAX_SIZE = (
+    800  # px, long edge — see thumb_path_for()/_generate_photo_thumbnail
+)
+
+
+def thumb_path_for(relpath: str) -> str:
+    """Map a photo's stored relpath to its thumbnail's -- same directory's
+    thumbs/ subfolder, always .jpg regardless of the original's format.
+    A pure path computation (no filesystem access) so both the upload
+    path and serve_photo_thumb derive the same location from one place."""
+    photo_dir, fname = os.path.split(relpath)
+    base = os.path.splitext(fname)[0]
+    return os.path.join(photo_dir, "thumbs", base + ".jpg").replace("\\", "/")
+
+
+def _generate_photo_thumbnail(original_path: str, thumb_path: str) -> None:
+    """Best-effort resized-JPEG thumbnail next to an already-saved photo.
+
+    Every failure (corrupt upload, exotic format Pillow can't decode, disk
+    error) is swallowed: serve_photo_thumb falls back to the full original
+    whenever no thumbnail file exists, so a thumbnail-generation problem
+    degrades to "not optimized yet" rather than blocking the upload or
+    breaking the photo's display.
+    """
+    try:
+        from PIL import (  # pyright: ignore[reportMissingImports]
+            Image,
+            ImageOps,
+        )
+
+        with Image.open(original_path) as img_file:
+            upright = ImageOps.exif_transpose(img_file) or img_file
+            rgb = upright if upright.mode in ("RGB", "L") else upright.convert("RGB")
+            rgb.thumbnail(
+                (_PHOTO_THUMB_MAX_SIZE, _PHOTO_THUMB_MAX_SIZE),
+                Image.Resampling.LANCZOS,
+            )
+            os.makedirs(os.path.dirname(thumb_path), exist_ok=True)
+            rgb.save(thumb_path, "JPEG", quality=85, optimize=True)
+    except Exception:
+        log.warning(
+            "Photo thumbnail generation failed for %s", original_path, exc_info=True
+        )
+
+
 def _save_photo_file(
     file: Any,
     tenant_slug: str,
@@ -2752,28 +2799,36 @@ def _save_photo_file(
     folder = current_app.config.get("UPLOAD_FOLDER", "/data/uploads")
     dest_dir = os.path.join(folder, tenant_slug, safe_reg, "photos")
     os.makedirs(dest_dir, exist_ok=True)
-    file.save(os.path.join(dest_dir, fname))
+    dest_path = os.path.join(dest_dir, fname)
+    file.save(dest_path)
     relpath = os.path.join(tenant_slug, safe_reg, "photos", fname).replace("\\", "/")
+    _generate_photo_thumbnail(dest_path, os.path.join(folder, thumb_path_for(relpath)))
     return relpath, original
 
 
-def _trash_photo_file(filename: str) -> None:
-    """Move photo file to _trash/ (same pattern as document deletion)."""
-    folder = current_app.config.get("UPLOAD_FOLDER", "/data/uploads")
-    src = os.path.join(folder, filename)
+def _trash_one_file(folder: str, relpath: str) -> None:
+    src = os.path.join(folder, relpath)
     if not os.path.exists(src):
         return
     try:
         trash_dir = os.path.join(folder, "_trash")
         os.makedirs(trash_dir, exist_ok=True)
-        base = os.path.basename(filename)
+        base = os.path.basename(relpath)
         dest = os.path.join(trash_dir, base)
         if os.path.exists(dest):
             stem, ext = os.path.splitext(base)
             dest = os.path.join(trash_dir, f"{stem}_{_uuid_mod.uuid4().hex[:6]}{ext}")
         os.rename(src, dest)
     except OSError:
-        current_app.logger.debug("Could not trash photo: %s", filename)
+        current_app.logger.debug("Could not trash photo: %s", relpath)
+
+
+def _trash_photo_file(filename: str) -> None:
+    """Move a photo file, and its thumbnail if one exists, to _trash/ (same
+    pattern as document deletion)."""
+    folder = current_app.config.get("UPLOAD_FOLDER", "/data/uploads")
+    _trash_one_file(folder, filename)
+    _trash_one_file(folder, thumb_path_for(filename))
 
 
 def _renumber_photos(photos: list[Any], tenant_slug: str, safe_reg: str) -> None:
@@ -2797,6 +2852,20 @@ def _renumber_photos(photos: list[Any], tenant_slug: str, safe_reg: str) -> None
                     )
                     new_fname = old_fname  # keep old name if rename fails
             new_rel = f"{tenant_slug}/{safe_reg}/photos/{new_fname}"
+            # Keep the thumbnail's name in sync so it's still found by
+            # thumb_path_for(new filename) after the rename above — without
+            # this, every reordered photo would silently fall back to
+            # serving its full-size original until next re-uploaded.
+            old_thumb_full = os.path.join(folder, thumb_path_for(photo.filename))
+            new_thumb_full = os.path.join(folder, thumb_path_for(new_rel))
+            if new_fname != old_fname and os.path.exists(old_thumb_full):
+                try:
+                    os.makedirs(os.path.dirname(new_thumb_full), exist_ok=True)
+                    os.rename(old_thumb_full, new_thumb_full)
+                except OSError:
+                    current_app.logger.debug(
+                        "Could not renumber photo thumbnail: %s", photo.filename
+                    )
             photo.filename = new_rel
             photo.sort_order = new_order
 
@@ -2880,6 +2949,32 @@ def serve_photo(aircraft_id: int, photo_id: int) -> ResponseReturnValue:
     # changes sort_order; a replacement upload gets a new id) — safe to
     # cache aggressively so the dashboard/list prefetch hints actually pay
     # off instead of being revalidated away on the next navigation.
+    response = send_from_directory(directory, fname, max_age=31536000)
+    response.headers["Cache-Control"] = "private, max-age=31536000, immutable"
+    return response
+
+
+@aircraft_bp.route("/<aircraft_ref:aircraft_id>/photos/<int:photo_id>/thumb")
+@login_required
+def serve_photo_thumb(aircraft_id: int, photo_id: int) -> ResponseReturnValue:
+    """Resized-JPEG version of serve_photo for the small display contexts
+    (dashboard fleet row, single-aircraft cover, photo gallery grid) that
+    never need the full original — see _generate_photo_thumbnail. Falls
+    back to serving the original when no thumbnail file exists yet (a
+    photo uploaded before this existed, or thumbnail generation failed at
+    upload time), so every photo still displays either way."""
+    from flask import send_from_directory  # pyright: ignore[reportMissingImports]
+
+    ac = _get_aircraft_or_404(aircraft_id)
+    photo = db.session.get(AircraftPhoto, photo_id)
+    if not photo or photo.aircraft_id != ac.id:
+        abort(404)
+    folder = current_app.config.get("UPLOAD_FOLDER", "/data/uploads")
+    thumb_relpath = thumb_path_for(photo.filename)
+    if not os.path.isfile(os.path.join(folder, thumb_relpath)):
+        thumb_relpath = photo.filename
+    directory = os.path.join(folder, os.path.dirname(thumb_relpath))
+    fname = os.path.basename(thumb_relpath)
     response = send_from_directory(directory, fname, max_age=31536000)
     response.headers["Cache-Control"] = "private, max-age=31536000, immutable"
     return response
