@@ -2,6 +2,8 @@
 (function () {
   'use strict';
 
+  var nextListId = 0;
+
   function initAirportAc(input) {
     if (input.dataset.ohInited) return;
     input.dataset.ohInited = '1';
@@ -10,6 +12,12 @@
     let items = [];
     let activeIdx = -1;
     let debounceId = null;
+    const listId = 'airport-ac-list-' + (nextListId++);
+
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('aria-controls', listId);
 
     const hint = document.createElement('div');
     hint.className = 'form-text airport-ac-hint';
@@ -19,6 +27,8 @@
       if (dropdown) { dropdown.remove(); dropdown = null; }
       items = [];
       activeIdx = -1;
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
     }
 
     function setActive(idx) {
@@ -27,6 +37,11 @@
       Array.from(dropdown.children).forEach(function (el, i) {
         el.classList.toggle('airport-ac-active', i === idx);
       });
+      if (idx >= 0 && dropdown.children[idx]) {
+        input.setAttribute('aria-activedescendant', dropdown.children[idx].id);
+      } else {
+        input.removeAttribute('aria-activedescendant');
+      }
     }
 
     function selectItem(code, name) {
@@ -40,10 +55,14 @@
       if (!results.length) return;
       dropdown = document.createElement('ul');
       dropdown.className = 'airport-ac-list list-unstyled position-absolute bg-body border rounded shadow-sm m-0 p-1';
+      dropdown.id = listId;
+      dropdown.setAttribute('role', 'listbox');
       items = results;
       results.forEach(function (r, i) {
         var li = document.createElement('li');
+        li.id = listId + '-opt-' + i;
         li.className = 'airport-ac-item px-2 py-1 d-flex gap-2 rounded';
+        li.setAttribute('role', 'option');
         li.innerHTML =
           '<span class="fw-semibold ac-code-col">' + r.code + '</span>' +
           '<span class="text-muted text-truncate small">' + r.name + '</span>';
@@ -51,6 +70,7 @@
         li.addEventListener('mouseover', function () { setActive(i); });
         dropdown.appendChild(li);
       });
+      input.setAttribute('aria-expanded', 'true');
       var wrapper = input.parentElement;
       if (getComputedStyle(wrapper).position === 'static') {
         wrapper.style.position = 'relative';

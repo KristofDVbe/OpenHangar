@@ -17,12 +17,19 @@
   'use strict';
 
   var MAX_ITEMS = 8;
+  var nextListId = 0;
 
   function initNameAc(input) {
     if (input.dataset.ohNameAcInited) return;
     var source = document.getElementById(input.dataset.nameAc);
     if (!source) return;
     input.dataset.ohNameAcInited = '1';
+
+    var listId = 'name-ac-list-' + (nextListId++);
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('aria-controls', listId);
 
     var dropdown = null;
     var items = [];
@@ -36,6 +43,8 @@
       if (dropdown) { dropdown.remove(); dropdown = null; }
       items = [];
       activeIdx = -1;
+      input.setAttribute('aria-expanded', 'false');
+      input.removeAttribute('aria-activedescendant');
     }
 
     function setActive(idx) {
@@ -44,6 +53,11 @@
       Array.prototype.forEach.call(dropdown.children, function (el, i) {
         el.classList.toggle('airport-ac-active', i === idx);
       });
+      if (idx >= 0 && dropdown.children[idx]) {
+        input.setAttribute('aria-activedescendant', dropdown.children[idx].id);
+      } else {
+        input.removeAttribute('aria-activedescendant');
+      }
     }
 
     function selectItem(name) {
@@ -78,11 +92,13 @@
       if (!results.length) return;
       dropdown = document.createElement('ul');
       dropdown.className = 'airport-ac-list list-unstyled position-absolute bg-body border rounded shadow-sm m-0 p-1';
+      dropdown.id = listId;
       dropdown.setAttribute('role', 'listbox');
       dropdown.dataset.nameAcList = input.id || '';
       items = results;
       results.forEach(function (name, i) {
         var li = document.createElement('li');
+        li.id = listId + '-opt-' + i;
         li.className = 'airport-ac-item px-2 py-1 rounded';
         li.setAttribute('role', 'option');
         li.textContent = name;
@@ -90,6 +106,7 @@
         li.addEventListener('mouseover', function () { setActive(i); });
         dropdown.appendChild(li);
       });
+      input.setAttribute('aria-expanded', 'true');
       var wrapper = input.parentElement;
       if (getComputedStyle(wrapper).position === 'static') {
         wrapper.style.position = 'relative';
