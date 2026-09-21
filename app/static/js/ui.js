@@ -5,7 +5,9 @@
  * Supported data attributes:
  *   data-href="URL"                   any element behaves like a link
  *   data-stop-prop                    click does not propagate (action cells in clickable rows)
- *   data-confirm="msg"               form submit requires confirm() — msg is HTML-decoded by the browser
+ *   data-confirm="msg"               form submit requires confirmation via #oh-confirm-modal
+ *                                     (base.html) before it's allowed through — msg is
+ *                                     HTML-decoded by the browser
  *   data-auto-submit                  input/select change auto-submits its form
  *   data-onchange="fnName"           change calls window[fnName](event)
  *   data-action="apply-preset"       permissions preset button
@@ -50,17 +52,65 @@ function _ohInit() {
   });
 
   /* ── Delete / action confirmations ─────────────────────────────────── */
+  /* One shared #oh-confirm-modal (base.html) stands in for every
+     data-confirm form on the page instead of the native confirm() dialog.
+     Since showing a Bootstrap modal is asynchronous (waits for a button
+     click) while a submit handler needs a synchronous yes/no, every
+     data-confirm submit is provisionally blocked, and — only once the user
+     actually clicks Confirm in the modal — the exact same form is
+     re-submitted with a one-shot data-ohConfirmed marker that lets that
+     second submit straight through (HTMX included, since we never called
+     preventDefault on that second, real submit). */
+  var _ohConfirmModalEl = document.getElementById('oh-confirm-modal');
+  var _ohConfirmPendingForm = null;
+
+  function _ohConfirmModal() {
+    if (!_ohConfirmModalEl || !window.bootstrap) return null;
+    return bootstrap.Modal.getOrCreateInstance(_ohConfirmModalEl);
+  }
+
+  if (_ohConfirmModalEl && !_ohIsInit(_ohConfirmModalEl)) {
+    _ohMarkInit(_ohConfirmModalEl);
+    document.getElementById('oh-confirm-modal-confirm').addEventListener('click', function () {
+      var form = _ohConfirmPendingForm;
+      _ohConfirmPendingForm = null;
+      var modal = _ohConfirmModal();
+      if (modal) modal.hide();
+      if (form) {
+        form.dataset.ohConfirmed = '1';
+        form.requestSubmit();
+      }
+    });
+    _ohConfirmModalEl.addEventListener('hidden.bs.modal', function () {
+      _ohConfirmPendingForm = null;
+    });
+  }
+
   document.querySelectorAll('form[data-confirm]').forEach(function (form) {
     if (_ohIsInit(form)) return;
     _ohMarkInit(form);
-    /* Capture phase: fires before HTMX's bubble-phase submit handler so that
-       a cancelled dialog prevents the XHR from ever being dispatched. On
-       accept we do nothing — the event continues and HTMX handles it. */
+    /* Capture phase: fires before HTMX's bubble-phase submit handler so a
+       not-yet-confirmed submit never reaches HTMX at all. */
     form.addEventListener('submit', function (e) {
-      if (!confirm(form.dataset.confirm)) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
+      if (form.dataset.ohConfirmed === '1') {
+        delete form.dataset.ohConfirmed;
+        return; // the user already confirmed — let this real submit through
       }
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      var modal = _ohConfirmModal();
+      if (!modal) {
+        // Bootstrap JS failed to load — fall back to the native dialog
+        // rather than silently blocking every destructive action.
+        if (confirm(form.dataset.confirm)) {
+          form.dataset.ohConfirmed = '1';
+          form.requestSubmit();
+        }
+        return;
+      }
+      document.getElementById('oh-confirm-modal-message').textContent = form.dataset.confirm;
+      _ohConfirmPendingForm = form;
+      modal.show();
     }, true);
   });
 

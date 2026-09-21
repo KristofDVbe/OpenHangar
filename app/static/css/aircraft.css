@@ -123,6 +123,27 @@
   text-decoration: underline;
 }
 
+/* ── Section header icon badges (detail page) ──
+   With ~12 near-identical section headers stacked down the page, a plain
+   inherited-color icon in front of each one reads as one long, flat wall.
+   Reuses the .icon-* color helpers (base.css) already used for dashboard
+   stat cards, loosely grouped by nature -- red for safety/compliance,
+   amber for upkeep/consumables, green for financial, blue for the
+   core/frequent sections, purple for scheduling/media, teal for the rest
+   -- so scanning the page also gives a rough sense of what kind of
+   section you're looking at, not just its name. */
+.ac-section-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-right: .5rem;
+  vertical-align: middle;
+}
+
 /* ── Component groups (detail page) ── */
 .ac-comp-group-title {
   font-size: .95rem;

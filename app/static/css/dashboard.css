@@ -74,6 +74,14 @@ a.stat-card-link:hover .stat-card {
   flex: 1;
 }
 
+/* ── Crew invite/claim decision cards (mobile-only, below md) ──
+   The table version of these panels puts Confirm/Decline in a scrollable
+   column that sits off-screen on a phone; this stacked-card version keeps
+   the whole decision (context + both actions) in one view. */
+.oh-decision-card {
+  padding: .85rem 1rem;
+}
+
 /* ── Single-aircraft summary panel cover photo — bleeds to the panel-body
    edges (negative margin cancels the padding), same idea as .ac-card-cover ── */
 .dash-single-ac-cover {
