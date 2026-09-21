@@ -157,7 +157,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="section-title mb-0">
       <a href="{{ url_for('snags.list_snags', aircraft_id=aircraft.id) }}" class="section-title-link">
-        <i class="bi bi-cone-striped me-2"></i>{{ _('Active Known Points') }}
+        <span class="ac-section-icon icon-red"><i class="bi bi-cone-striped"></i></span>{{ _('Active Known Points') }}
       </a>
       {% if open_snags %}
       <span class="badge {% if aircraft.is_grounded %}bg-danger{% else %}bg-warning text-dark{% endif %} ms-2 oh-fs-075 fw-medium">{{ open_snags | length }}</span>
@@ -214,7 +214,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="section-title mb-0">
       <a href="{{ url_for('maintenance.list_triggers', aircraft_id=aircraft.id) }}" class="section-title-link">
-        <i class="bi bi-tools me-2"></i>{{ _('Maintenance') }}
+        <span class="ac-section-icon icon-amber"><i class="bi bi-tools"></i></span>{{ _('Maintenance') }}
       </a>
     </h2>
     {% if is_maint %}
@@ -263,7 +263,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="section-title mb-0">
       <a href="{{ url_for('airworthiness.dashboard', aircraft_id=aircraft.id) }}" class="section-title-link">
-        <i class="bi bi-shield-check me-2"></i>{{ _('Airworthiness') }}
+        <span class="ac-section-icon icon-red"><i class="bi bi-shield-check"></i></span>{{ _('Airworthiness') }}
       </a>
     </h2>
   </div>
@@ -474,7 +474,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="section-title mb-0">
       <a href="{{ url_for('flights.list_flights', aircraft_id=aircraft.id) }}" class="section-title-link">
-        <i class="bi bi-book me-2"></i>{{ _('Recent Flights') }}
+        <span class="ac-section-icon icon-blue"><i class="bi bi-book"></i></span>{{ _('Recent Flights') }}
       </a>
     </h2>
     <div class="d-flex gap-2 flex-wrap">
@@ -535,7 +535,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="section-title mb-0">
       <a href="{{ url_for('reservations.calendar_view', aircraft_id=aircraft.id) }}" class="section-title-link">
-        <i class="bi bi-calendar3 me-2"></i>{{ _('Reservations') }}
+        <span class="ac-section-icon icon-purple"><i class="bi bi-calendar3"></i></span>{{ _('Reservations') }}
       </a>
     </h2>
     {% if is_pilot %}
@@ -591,7 +591,7 @@
     <h2 class="section-title mb-0">
       {% if wb_config %}
       <a href="{{ url_for('aircraft.wb_list', aircraft_id=aircraft.id) }}" class="section-title-link">
-        <i class="bi bi-calculator me-2"></i>{{ _('Mass & Balance') }}
+        <span class="ac-section-icon icon-teal"><i class="bi bi-calculator"></i></span>{{ _('Mass & Balance') }}
       </a>
       {% else %}
       <i class="bi bi-calculator me-2"></i>{{ _('Mass & Balance') }}
@@ -661,7 +661,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="section-title mb-0">
       <a href="{{ url_for('expenses.list_expenses', aircraft_id=aircraft.id) }}" class="section-title-link">
-        <i class="bi bi-currency-euro me-2"></i>{{ _('Expenses') }}
+        <span class="ac-section-icon icon-green"><i class="bi bi-currency-euro"></i></span>{{ _('Expenses') }}
       </a>
     </h2>
     <div class="d-flex gap-2 flex-wrap">
@@ -670,13 +670,25 @@
         <i class="bi bi-plus-circle me-1"></i>{{ _('Add expense') }}
       </a>
       <a href="{{ url_for('expenses.cost_dashboard', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-ghost btn-sm">
+         class="btn btn-ac-ghost btn-sm d-none d-lg-inline-block">
         <i class="bi bi-graph-up-arrow me-1"></i>{{ _('Cost dashboard') }}
       </a>
       <a href="{{ url_for('reports.utilization_report', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-ghost btn-sm">
+         class="btn btn-ac-ghost btn-sm d-none d-lg-inline-block">
         <i class="bi bi-clipboard-data me-1"></i>{{ _('Utilization report') }}
       </a>
+      <div class="dropdown d-lg-none">
+        <button class="btn btn-ac-ghost btn-sm dropdown-toggle" type="button"
+                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          <i class="bi bi-three-dots me-1"></i>{{ _('More') }}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{{ url_for('expenses.cost_dashboard', aircraft_id=aircraft.id) }}">
+            <i class="bi bi-graph-up-arrow me-2"></i>{{ _('Cost dashboard') }}</a></li>
+          <li><a class="dropdown-item" href="{{ url_for('reports.utilization_report', aircraft_id=aircraft.id) }}">
+            <i class="bi bi-clipboard-data me-2"></i>{{ _('Utilization report') }}</a></li>
+        </ul>
+      </div>
     </div>
   </div>
   <div class="ac-form-card {% if recent_expenses %}p-0{% else %}p-3{% endif %} mb-3">
@@ -707,7 +719,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="section-title mb-0">
       <a href="{{ url_for('refuels.list_refuels', aircraft_id=aircraft.id) }}" class="section-title-link">
-        <i class="bi bi-fuel-pump me-2"></i>{{ _('Refuels') }}
+        <span class="ac-section-icon icon-amber"><i class="bi bi-fuel-pump"></i></span>{{ _('Refuels') }}
       </a>
     </h2>
     {% if is_crew %}
@@ -857,7 +869,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="section-title mb-0">
       <a href="{{ url_for('documents.list_documents', aircraft_id=aircraft.id) }}" class="section-title-link">
-        <i class="bi bi-folder2 me-2"></i>{{ _('Documents') }}
+        <span class="ac-section-icon icon-blue"><i class="bi bi-folder2"></i></span>{{ _('Documents') }}
       </a>
       {% if document_count %}
       <span class="badge bg-body-secondary text-body border ms-2 oh-fs-075 fw-medium">{{ document_count }}</span>
@@ -896,22 +908,27 @@
             {{ doc.uploaded_at.strftime('%Y-%m-%d') if doc.uploaded_at else '' }}
           </td>
           <td class="pe-3 text-end align-middle text-nowrap">
+            {# Icon-only in this compact preview list (unlike the full
+               documents list page) so the row never needs a horizontal
+               scroll just to reach the actions -- two short labels were
+               enough to push the last button off-screen at 390px. #}
             {% if doc.is_image or doc.is_pdf %}
             <button type="button" class="btn btn-ac-secondary btn-xs me-1"
                     data-bs-toggle="modal" data-bs-target="#docModal"
                     data-url="{{ url_for('flights.serve_upload', filename=doc.filename) }}"
                     data-mime="{{ doc.mime_type or '' }}"
-                    data-title="{{ doc.title or doc.original_filename }}">
-              <i class="bi bi-eye me-1"></i>{{ _('View') }}
+                    data-title="{{ doc.title or doc.original_filename }}"
+                    title="{{ _('View') }}">
+              <i class="bi bi-eye"></i>
             </button>
             <a href="{{ url_for('flights.serve_upload', filename=doc.filename) }}"
-               class="btn btn-ac-secondary btn-xs" download>
-              <i class="bi bi-download me-1"></i>{{ _('Download') }}
+               class="btn btn-ac-secondary btn-xs" download title="{{ _('Download') }}">
+              <i class="bi bi-download"></i>
             </a>
             {% else %}
             <a href="{{ url_for('flights.serve_upload', filename=doc.filename) }}"
-               class="btn btn-ac-secondary btn-xs" download>
-              <i class="bi bi-download me-1"></i>{{ _('Download') }}
+               class="btn btn-ac-secondary btn-xs" download title="{{ _('Download') }}">
+              <i class="bi bi-download"></i>
             </a>
             {% endif %}
           </td>
@@ -930,7 +947,7 @@
   {% macro photos_section() %}
   <div class="d-flex align-items-center justify-content-between mb-3" id="photos-section">
     <h2 class="section-title mb-0">
-      <i class="bi bi-images me-2"></i>{{ _('Photos') }}
+      <span class="ac-section-icon icon-purple"><i class="bi bi-images"></i></span>{{ _('Photos') }}
       {% if photos %}
       <span class="badge bg-secondary ms-2 oh-fs-075 fw-medium">{{ photos | length }}</span>
       {% endif %}
@@ -998,7 +1015,7 @@
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h2 class="section-title mb-0">
       <a href="{{ url_for('aircraft.flight_tracks', aircraft_id=aircraft.id) }}" class="section-title-link">
-        <i class="bi bi-map me-2"></i>{{ ngettext('GPS track', 'GPS tracks', track_rows|length) }}
+        <span class="ac-section-icon icon-teal"><i class="bi bi-map"></i></span>{{ ngettext('GPS track', 'GPS tracks', track_rows|length) }}
       </a>
     </h2>
   </div>
@@ -1028,7 +1045,7 @@
   {% macro ownership_section() %}
   <div class="ac-form-card">
     <div class="d-flex align-items-center justify-content-between mb-3">
-      <h2 class="section-title mb-0"><i class="bi bi-people me-2"></i>{{ _('Ownership') }}</h2>
+      <h2 class="section-title mb-0"><span class="ac-section-icon icon-blue"><i class="bi bi-people"></i></span>{{ _('Ownership') }}</h2>
       <div class="d-flex gap-2">
         <a href="{{ url_for('aircraft.owners_billing', aircraft_id=aircraft.id) }}" class="btn btn-ac-secondary btn-sm">
           <i class="bi bi-cash-coin me-1"></i>{{ _('Billing dashboard') }}
@@ -1106,7 +1123,7 @@
 
   {# Share links — full width, always last #}
   <div class="d-flex align-items-center justify-content-between mb-3 mt-5" id="share-links-section">
-    <h2 class="section-title mb-0"><i class="bi bi-share me-2"></i>{{ _('Share Links') }}</h2>
+    <h2 class="section-title mb-0"><span class="ac-section-icon icon-teal"><i class="bi bi-share"></i></span>{{ _('Share Links') }}</h2>
     <button class="btn btn-ac-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createShareModal">
       <i class="bi bi-plus-circle me-1"></i>{{ _('New link') }}
     </button>

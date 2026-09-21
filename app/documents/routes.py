@@ -38,6 +38,7 @@ from models import (  # pyright: ignore[reportMissingImports]
     TenantUser,
     db,
 )
+from sqlalchemy.orm import joinedload  # pyright: ignore[reportMissingImports]
 from utils import (  # pyright: ignore[reportMissingImports]
     activity,
     login_required,
@@ -479,7 +480,11 @@ def list_documents(aircraft_id: int) -> ResponseReturnValue:
     filter_doc_type = request.args.get("doc_type") or None
     if filter_doc_type not in doc_type_labels:
         filter_doc_type = None
-    query = Document.query.filter_by(aircraft_id=ac.id)
+    query = Document.query.filter_by(aircraft_id=ac.id).options(
+        joinedload(Document.component),  # type: ignore[arg-type]
+        joinedload(Document.flight_entry),  # type: ignore[arg-type]
+        joinedload(Document.expense),  # type: ignore[arg-type]
+    )
     if not show_sensitive:
         query = query.filter_by(is_sensitive=False)
     if filter_doc_type == _NO_TYPE_FILTER:

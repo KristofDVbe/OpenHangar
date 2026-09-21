@@ -93,14 +93,17 @@ class TestClickableRows:
         )
 
 
-# ── data-confirm: delete forms show confirmation dialog ──────────────────────
+# ── data-confirm: delete forms show a confirmation modal ─────────────────────
+# ui.js intercepts the submit and opens #oh-confirm-modal (base.html) instead
+# of the native confirm() dialog, so these drive that modal's own buttons
+# rather than Playwright's page.once("dialog", ...) handler.
 
 
 class TestDeleteConfirmation:
     def test_confirm_cancel_prevents_submit(
         self, logged_in_page, live_server_url, live_app, seed
     ):
-        """Cancelling the confirm dialog must not delete the entry."""
+        """Cancelling the confirm modal must not delete the entry."""
         page = logged_in_page
         ac_id = seed["ac_del1"]
         fe_id = seed["fe_del1"]
@@ -108,8 +111,10 @@ class TestDeleteConfirmation:
         page.goto(f"{live_server_url}/aircraft/{ac_id}/flights")
         page.wait_for_load_state("networkidle")
 
-        page.once("dialog", lambda d: d.dismiss())
         page.locator(f'form[action*="/{fe_id}/delete"] button.btn-ac-danger').click()
+        page.locator("#oh-confirm-modal.show").wait_for(state="visible")
+        page.locator('#oh-confirm-modal button[data-bs-dismiss="modal"]').click()
+        page.locator("#oh-confirm-modal.show").wait_for(state="hidden")
         page.wait_for_load_state("networkidle")
 
         # Verify via HTTP so the check uses a fresh Flask request (no stale session).
@@ -120,7 +125,7 @@ class TestDeleteConfirmation:
     def test_confirm_accept_submits_form(
         self, logged_in_page, live_server_url, live_app, seed
     ):
-        """Accepting the confirm dialog deletes the entry."""
+        """Confirming the modal deletes the entry."""
         page = logged_in_page
         ac_id = seed["ac_del2"]
         fe_id = seed["fe_del2"]
@@ -128,14 +133,13 @@ class TestDeleteConfirmation:
         page.goto(f"{live_server_url}/aircraft/{ac_id}/flights")
         page.wait_for_load_state("networkidle")
 
-        page.once("dialog", lambda d: d.accept())
+        page.locator(f'form[action*="/{fe_id}/delete"] button.btn-ac-danger').click()
+        page.locator("#oh-confirm-modal.show").wait_for(state="visible")
         with page.expect_response(
             lambda r: f"/{fe_id}/delete" in r.url and r.request.method == "POST",
             timeout=10000,
         ) as response_info:
-            page.locator(
-                f'form[action*="/{fe_id}/delete"] button.btn-ac-danger'
-            ).click()
+            page.locator("#oh-confirm-modal-confirm").click()
         delete_resp = response_info.value
         assert delete_resp.status in (200, 302, 303, 204), (
             f"delete POST returned {delete_resp.status} — CSRF, auth, or server error"

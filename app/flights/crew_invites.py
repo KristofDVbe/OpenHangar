@@ -36,6 +36,10 @@ from models import (  # pyright: ignore[reportMissingImports]
     db,
 )
 from sqlalchemy import or_  # pyright: ignore[reportMissingImports]
+from sqlalchemy.orm import (  # pyright: ignore[reportMissingImports]
+    contains_eager,
+    joinedload,
+)
 from utils import tenant_pilots  # pyright: ignore[reportMissingImports]
 
 from flights.shared_flight import (  # pyright: ignore[reportMissingImports]
@@ -170,8 +174,15 @@ def sync_crew_invites(
 
 
 def pending_invites_for_user(user_id: int) -> list[FlightCrewInvite]:
+    # contains_eager reuses the join already needed for ordering by flight
+    # date instead of issuing a second query per row; invited_by is loaded
+    # the same way since every row in the dashboard/logbook panel needs it.
     invites: list[FlightCrewInvite] = (
         FlightCrewInvite.query.join(Flight, Flight.id == FlightCrewInvite.flight_id)
+        .options(
+            contains_eager(FlightCrewInvite.flight),  # type: ignore[arg-type]
+            joinedload(FlightCrewInvite.invited_by),  # type: ignore[arg-type]
+        )
         .filter(
             FlightCrewInvite.invited_user_id == user_id,
             FlightCrewInvite.status == CrewInviteStatus.PENDING,
@@ -258,6 +269,10 @@ def pending_claims_to_review(user_id: int) -> list[FlightCrewInvite]:
     """Pending claims on flights *user_id* owns the shared fields of."""
     candidates: list[FlightCrewInvite] = (
         FlightCrewInvite.query.join(Flight, Flight.id == FlightCrewInvite.flight_id)
+        .options(
+            contains_eager(FlightCrewInvite.flight),  # type: ignore[arg-type]
+            joinedload(FlightCrewInvite.invited_user),  # type: ignore[arg-type]
+        )
         .filter(
             FlightCrewInvite.status == CrewInviteStatus.PENDING,
             FlightCrewInvite.kind == CrewInviteKind.CLAIM,
