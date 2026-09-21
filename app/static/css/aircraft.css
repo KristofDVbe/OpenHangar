@@ -80,6 +80,20 @@
   object-position: center;
   display: block;
 }
+/* No cover photo yet: a plain empty #e9ecef box reads as broken/unfinished
+   next to cards that do have a photo -- give it the same tinted-icon
+   treatment as the .icon-blue badges used elsewhere instead. */
+.ac-card-cover-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #dbeafe;
+}
+.ac-card-cover-placeholder i {
+  font-size: 2.75rem;
+  color: var(--oh-instrument);
+  opacity: .55;
+}
 .ac-card-link:hover .ac-card {
   box-shadow: 0 4px 16px rgba(0,0,0,.08);
   border-color: var(--oh-instrument);
@@ -255,6 +269,8 @@
 [data-bs-theme=dark] .ac-form-card,
 [data-bs-theme=dark] .ac-empty { background: #2a2d31; border-color: #3a4050; }
 [data-bs-theme=dark] .ac-card-cover { background: #1e2124; }
+[data-bs-theme=dark] .ac-card-cover-placeholder { background: #1e3a5f; }
+[data-bs-theme=dark] .ac-card-cover-placeholder i { color: #90bfef; }
 [data-bs-theme=dark] .ac-card-cover img,
 [data-bs-theme=dark] .ac-hero-cover img,
 [data-bs-theme=dark] .photo-thumb-img,
