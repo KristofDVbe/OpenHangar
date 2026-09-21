@@ -57,6 +57,10 @@
             <img src="{{ url_for('aircraft.serve_photo', aircraft_id=ac.id, photo_id=cp.id) }}"
                  alt="{{ ac.registration }}">
           </div>
+          {% else %}
+          <div class="ac-card-cover ac-card-cover-placeholder">
+            <i class="bi bi-airplane"></i>
+          </div>
           {% endif %}
           <div class="ac-card-reg">
             <span class="oh-reg-plate oh-reg-plate-lg">{{ ac.registration }}</span>
