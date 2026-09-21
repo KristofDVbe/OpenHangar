@@ -998,6 +998,7 @@ class TestSWRRouteCoverage:
         "/set-theme/<theme>",
         "/aircraft/<aircraft_ref:aircraft_id>/gps-import/prefill-segment/<int:seg_idx>",
         "/aircraft/<aircraft_ref:aircraft_id>/photos/<int:photo_id>/img",
+        "/aircraft/<aircraft_ref:aircraft_id>/photos/<int:photo_id>/thumb",
         "/aircraft/<aircraft_ref:aircraft_id>/share/<int:token_id>/qr",
         "/aircraft/<aircraft_ref:aircraft_id>/documents/download-all",
         "/config/gatus-badge/<path:badge_path>",
