@@ -32,14 +32,19 @@
 }
 .welcome-input {
   flex: 0 0 185px;
-  background: rgba(255,255,255,.14);
+  /* A black (not white) tint darkens whatever part of the .welcome-hero
+     gradient sits behind it -- needed because the gradient's lighter end
+     (--oh-instrument, #3FA7D6) left the previous white-tint version well
+     under WCAG AA contrast for the white input text (~2.3:1 measured at
+     that end, against the 4.5:1 normal-text minimum). */
+  background: rgba(0,0,0,.32);
   border: 1px solid rgba(255,255,255,.3);
   color: #fff;
 }
-.welcome-input::placeholder { color: rgba(255,255,255,.55); }
+.welcome-input::placeholder { color: rgba(255,255,255,.8); }
 .welcome-input:focus {
-  background: rgba(255,255,255,.2);
-  border-color: rgba(255,255,255,.55);
+  background: rgba(0,0,0,.4);
+  border-color: rgba(255,255,255,.6);
   color: #fff;
   box-shadow: 0 0 0 .2rem rgba(255,255,255,.12);
 }
