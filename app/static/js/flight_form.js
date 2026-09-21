@@ -47,6 +47,18 @@
     document.querySelectorAll('input[name="pilot_role"]').forEach(function (r) { r.addEventListener('change', updateVisibility); });
     updateVisibility();
 
+    // Aircraft logbook (counters/photos/fuel) and Pilot logbook start
+    // collapsed on a phone-width screen (most flights don't need to touch
+    // them) and open at md+ (768px), matching their markup default of
+    // `open` in flight_form.html — closing them here rather than defaulting
+    // closed in the HTML means a no-JS visitor still sees every field.
+    if (window.innerWidth < 768) {
+      ['aircraft-log-details', 'pilot-log-details'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.removeAttribute('open');
+      });
+    }
+
     if (!editMode && pilotNameHint) {
       var crewName0 = document.getElementById('crew_name_0');
       var crewName1 = document.getElementById('crew_name_1');
