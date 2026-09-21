@@ -526,6 +526,29 @@ nav.navbar.mayday #oh-mayday-banner {
   body { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
 }
 
+/* ── Floating primary action (mobile only) ──
+   A page-header "Add X" button sits in the hardest one-handed thumb-reach
+   zone (top of screen) with no bottom-nav equivalent to rely on instead —
+   this reuses .btn-ac-primary's look in a fixed circular button pinned
+   just above the bottom nav, in easy thumb reach. The page's own header
+   button stays for lg+ (d-lg-none on the FAB) where reach isn't a concern
+   and a mouse pointer is precise. */
+.oh-fab {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(64px + 1rem + env(safe-area-inset-bottom));
+  z-index: 1020;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  box-shadow: 0 4px 14px rgba(0,0,0,.3);
+}
+
 /* ── Dark mode overrides ─────────────────────────────────────────────────── */
 [data-bs-theme=dark] body { background: #1a1d20; color: #dee2e6; }
 [data-bs-theme=dark] .hero,

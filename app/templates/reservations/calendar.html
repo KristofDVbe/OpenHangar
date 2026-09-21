@@ -18,8 +18,12 @@
     <div class="d-flex gap-2 flex-wrap align-items-start">
       {% if is_pilot %}
       <a href="{{ url_for('reservations.new_reservation', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-primary btn-sm">
+         class="btn btn-ac-primary btn-sm d-none d-lg-inline-block">
         <i class="bi bi-plus-circle me-1"></i>{{ _('New reservation') }}
+      </a>
+      <a href="{{ url_for('reservations.new_reservation', aircraft_id=aircraft.id) }}"
+         class="btn btn-ac-primary oh-fab d-lg-none" aria-label="{{ _('New reservation') }}">
+        <i class="bi bi-plus-lg"></i>
       </a>
       {% endif %}
       {% if is_owner or is_maint %}

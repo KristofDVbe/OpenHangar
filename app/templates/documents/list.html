@@ -14,8 +14,12 @@
     <div class="d-flex gap-2 flex-wrap">
       {% if is_owner %}
       <a href="{{ url_for('documents.upload_document', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-primary btn-sm">
+         class="btn btn-ac-primary btn-sm d-none d-lg-inline-block">
         <i class="bi bi-upload me-1"></i>{{ _('Upload document') }}
+      </a>
+      <a href="{{ url_for('documents.upload_document', aircraft_id=aircraft.id) }}"
+         class="btn btn-ac-primary oh-fab d-lg-none" aria-label="{{ _('Upload document') }}">
+        <i class="bi bi-upload"></i>
       </a>
       <a href="{{ url_for('documents.list_reconcile') }}"
          class="btn btn-ac-secondary btn-sm">
