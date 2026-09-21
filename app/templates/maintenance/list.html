@@ -29,20 +29,20 @@
         <i class="bi bi-plus-circle me-1"></i>{{ _('Add item') }}
       </a>
       <a href="{{ url_for('maintenance.import_amp_upload', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-ghost d-none d-md-inline-block">
+         class="btn btn-ac-ghost d-none d-lg-inline-block">
         <i class="bi bi-cloud-upload me-1"></i>{{ _('Import from spreadsheet') }}
       </a>
       <a href="{{ url_for('maintenance.edit_amp_declaration', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-ghost d-none d-md-inline-block">
+         class="btn btn-ac-ghost d-none d-lg-inline-block">
         <i class="bi bi-file-earmark-text me-1"></i>{{ _('AMP declaration') }}
       </a>
       <a href="{{ url_for('maintenance.export_amp', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-ghost d-none d-md-inline-block">
+         class="btn btn-ac-ghost d-none d-lg-inline-block">
         <i class="bi bi-file-earmark-pdf me-1"></i>{{ _('Export AMP') }}
       </a>
-      <div class="dropdown d-md-none">
+      <div class="dropdown d-lg-none">
         <button class="btn btn-ac-ghost dropdown-toggle" type="button"
-                data-bs-toggle="dropdown" aria-expanded="false">
+                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
           <i class="bi bi-three-dots me-1"></i>{{ _('More') }}
         </button>
         <ul class="dropdown-menu dropdown-menu-end">

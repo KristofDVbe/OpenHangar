@@ -27,12 +27,29 @@
  * prefetch set, not a one-time init.
  */
 (function () {
+  function dataSaverActive() {
+    // navigator.connection is Chromium-only; browsers without it just skip
+    // this check and prefetch normally (same as before this guard existed).
+    var conn = navigator.connection;
+    if (!conn) return false;
+    return (
+      conn.saveData === true ||
+      conn.effectiveType === 'slow-2g' ||
+      conn.effectiveType === '2g'
+    );
+  }
+
   function refreshPrefetchHints() {
     document
       .querySelectorAll('link[rel="prefetch"][data-oh-prefetch]')
       .forEach(function (el) {
         el.remove();
       });
+
+    // Respect the user's data saver setting / a slow connection: idle-
+    // priority prefetching of sibling tabs a visitor may never open still
+    // spends real bytes on a metered mobile connection.
+    if (dataSaverActive()) return;
 
     var urls = [];
     document.querySelectorAll('.oh-prefetch-urls').forEach(function (el) {

@@ -174,11 +174,22 @@
       </a><a id="oh-pwa-queue-badge" href="{{ url_for('offline.changes') }}" aria-live="polite"></a>
       {% if logged_in or has_users %}
       <button class="navbar-toggler" type="button"
-              data-bs-toggle="collapse" data-bs-target="#navMenu"
+              data-bs-toggle="offcanvas" data-bs-target="#navMenu"
               aria-controls="navMenu" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse" id="navMenu">
+      {# .offcanvas-lg (Bootstrap's responsive-offcanvas navbar pattern):
+         a real slide-in panel with backdrop + focus trap below lg, but
+         plain inline navbar content at lg+ (offcanvas-header hidden,
+         offcanvas-body becomes a normal flex row) — same behaviour as the
+         old .collapse, just with a proper mobile menu instead of content
+         pushing open in place with no backdrop. #}
+      <div class="offcanvas-lg offcanvas-end" tabindex="-1" id="navMenu" aria-labelledby="navMenuLabel">
+        <div class="offcanvas-header">
+          <span class="offcanvas-title" id="navMenuLabel"><i class="bi bi-airplane brand-icon me-1"></i>OpenHangar</span>
+          <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#navMenu" aria-label="{{ _('Close') }}"></button>
+        </div>
+        <div class="offcanvas-body">
         {% if logged_in %}
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           {% if (tenant_profile and tenant_profile.setup_complete) or (not tenant_profile and has_users) %}
@@ -238,6 +249,7 @@
            expanded list) on mobile, while still appearing inline at the end
            of the navbar row at lg+ — same as before this was moved here. #}
         {% include 'partials/_theme_lang_switcher.html' %}
+        </div>
       </div>
       {% else %}
       {# No hamburger exists yet (first-run, before any user/tenant exists) —
@@ -331,6 +343,24 @@
       </span>
     </div>
   </footer>
+
+  <!-- Global confirm modal for [data-confirm] forms — see ui.js. Replaces the
+       native confirm() dialog everywhere so a destructive action gets the
+       app's own full-width, thumb-friendly buttons instead of a tiny,
+       unstyled, platform-inconsistent browser dialog. -->
+  <div class="modal fade" id="oh-confirm-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-body pt-4">
+          <p class="mb-0" id="oh-confirm-modal-message"></p>
+        </div>
+        <div class="modal-footer border-0 pt-0 flex-nowrap gap-2">
+          <button type="button" class="btn btn-ac-ghost flex-fill m-0" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+          <button type="button" class="btn btn-ac-danger flex-fill m-0" id="oh-confirm-modal-confirm">{{ _('Confirm') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Bootstrap JS -->
   <script nonce="{{ csp_nonce() }}" src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>

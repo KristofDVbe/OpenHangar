@@ -8,7 +8,40 @@
   </div>
   <div class="dash-panel-body p-0">
     <p class="text-muted oh-fs-085 px-3 pt-2 mb-2">{{ _('These pilots say they were on a flight you logged. Approving adds the flight to their pilot logbook.') }}</p>
-    <div class="table-responsive">
+
+    {# Below md: one full-width decision card per claim — see _crew_invites.html
+       for why (Approve/Decline must never sit off-screen behind a scroll). #}
+    <div class="d-md-none">
+      {% for c in crew_claims %}
+      {% set fe = c.flight %}
+      <div class="oh-decision-card{% if not loop.last %} border-bottom{% endif %}">
+        <div class="fw-semibold oh-text-navy">
+          <a href="{{ url_for('pilots.view_entry', entry_id=fe.id) }}" class="text-decoration-none oh-text-inherit">
+            {{ fe.date.isoformat() }} · {{ fe.departure_icao or '?' }} → {{ fe.arrival_icao or '?' }}
+          </a>
+          {% if fe.display_registration %}<span class="oh-reg-plate oh-fs-08 ms-1">{{ fe.display_registration }}</span>{% endif %}
+        </div>
+        <div class="text-muted oh-fs-085 mb-2">
+          {{ c.invited_user.display_name if c.invited_user else '—' }} ·
+          {% if c.slot == 'pic' %}{{ _('PIC / Commander') }}
+          {% elif (fe.second_crew_role or c.requested_role) in crew_roles.LABELS %}{{ _(crew_roles.LABELS[fe.second_crew_role or c.requested_role]) }}
+          {% else %}{{ _('Second crew') }}{% endif %}
+        </div>
+        <div class="d-flex gap-2">
+          <form method="post" action="{{ url_for('flights.approve_crew_claim', claim_id=c.id) }}" class="flex-fill">
+            <input type="hidden" name="next" value="{{ crew_invites_next }}">
+            <button type="submit" class="btn btn-success btn-sm w-100">{{ _('Approve') }}</button>
+          </form>
+          <form method="post" action="{{ url_for('flights.decline_crew_claim', claim_id=c.id) }}" class="flex-fill">
+            <input type="hidden" name="next" value="{{ crew_invites_next }}">
+            <button type="submit" class="btn btn-outline-danger btn-sm w-100">{{ _('Decline') }}</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="d-none d-md-block table-responsive">
       <table class="table table-hover mb-0 oh-fs-088">
         <thead class="table-light">
           <tr>

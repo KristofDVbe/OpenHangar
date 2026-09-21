@@ -59,6 +59,29 @@ main.page-content {
 .navbar-toggler-icon {
   filter: invert(1);
 }
+/* Nav menu below lg is a real Bootstrap offcanvas panel (base.html), not
+   content collapsing open in place — proper backdrop + focus trap instead
+   of page content staying interactive "through" an open menu. Its default
+   background is Bootstrap's own light --bs-offcanvas-bg (white), which
+   would make the .nav-link/.btn-nav-login light-on-dark text above
+   illegible; match the navbar's own dark background instead. Bootstrap's
+   own .offcanvas-lg responsive-navbar CSS forces this transparent again
+   at lg+ with !important, so this only takes effect on the actual
+   slide-in panel below that breakpoint. */
+#navMenu.offcanvas-lg {
+  background: var(--oh-ink);
+  color: #fff;
+}
+#navMenu .offcanvas-header {
+  border-bottom: 1px solid rgba(255,255,255,.15);
+}
+#navMenu .offcanvas-title {
+  color: #fff;
+  font-weight: 700;
+}
+#navMenu .btn-close {
+  filter: invert(1);
+}
 .env-badge {
   display: inline-block;
   font-size: .6rem;
