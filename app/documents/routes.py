@@ -87,6 +87,11 @@ _AIRCRAFT_DOC_TYPES = [
 _NO_TYPE_FILTER = "none"
 _NO_TYPE_LABEL = _l("No type set")
 
+# Aircraft documents list pagination -- same values/convention as the pilot
+# logbook (pilots/routes.py _VALID_PER_PAGE/_DEFAULT_PER_PAGE).
+_DOCS_VALID_PER_PAGE = (10, 20, 50, 100)
+_DOCS_DEFAULT_PER_PAGE = 20
+
 # doc_type -> Aircraft attribute it drives. Aircraft.insurance_expiry/arc_expiry
 # are synced caches, not directly user-editable — see the comment on those
 # columns in models.py. Kept in step by _recompute_expiry_field() below
@@ -491,7 +496,29 @@ def list_documents(aircraft_id: int) -> ResponseReturnValue:
         query = query.filter(Document.doc_type.is_(None))
     elif filter_doc_type:
         query = query.filter_by(doc_type=filter_doc_type)
-    docs = query.order_by(Document.uploaded_at.desc()).all()
+    query = query.order_by(Document.uploaded_at.desc())
+
+    page = request.args.get("page", 1, type=int)
+    pp_raw = request.args.get("per_page", str(_DOCS_DEFAULT_PER_PAGE))
+    show_all = pp_raw == "all"
+    per_page = (
+        None
+        if show_all
+        else (
+            int(pp_raw)
+            if pp_raw.isdigit() and int(pp_raw) in _DOCS_VALID_PER_PAGE
+            else _DOCS_DEFAULT_PER_PAGE
+        )
+    )
+    if show_all:
+        docs = query.all()
+        pagination = None
+        total_count = len(docs)
+    else:
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        docs = pagination.items
+        total_count = pagination.total
+
     sensitive_count = Document.query.filter_by(
         aircraft_id=ac.id, is_sensitive=True
     ).count()
@@ -514,6 +541,10 @@ def list_documents(aircraft_id: int) -> ResponseReturnValue:
         "documents/list.html",
         aircraft=ac,
         docs=docs,
+        pagination=pagination,
+        per_page=pp_raw,
+        valid_per_page=_DOCS_VALID_PER_PAGE,
+        total_count=total_count,
         show_sensitive=show_sensitive,
         sensitive_count=sensitive_count,
         is_owner=is_owner,

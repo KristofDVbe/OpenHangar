@@ -70,7 +70,63 @@
     {% endif %}
   </form>
 
-  {% if docs %}
+  {% if docs or total_count > 0 %}
+
+  {# ── Per-page selector + entry count ─────────────────────────────────────── #}
+  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+    <span class="text-muted small">
+      {% if pagination %}
+        {{ _('Showing %(start)s–%(end)s of %(total)s entries',
+             start=((pagination.page - 1) * pagination.per_page) + 1,
+             end=[pagination.page * pagination.per_page, pagination.total] | min,
+             total=pagination.total) }}
+      {% else %}
+        {{ ngettext('one entry (all)', '%(n)s entries (all)', total_count, n=total_count) }}
+      {% endif %}
+    </span>
+    <div class="d-flex align-items-center gap-1 small">
+      <span class="text-muted me-1">{{ _('Show:') }}</span>
+      {% for n in valid_per_page %}
+        {% set n_str = n | string %}
+        {% if per_page == n_str %}
+          <strong class="px-2 py-1 rounded oh-bg-navy-solid text-white">{{ n }}</strong>
+        {% else %}
+          <a href="{{ url_for('documents.list_documents', aircraft_id=aircraft.id, per_page=n_str, sensitive=1 if show_sensitive else none, doc_type=filter_doc_type) }}" class="px-2 py-1 text-decoration-none">{{ n }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if per_page == 'all' %}
+        <strong class="px-2 py-1 rounded oh-bg-navy-solid text-white">{{ _('All') }}</strong>
+      {% else %}
+        <a href="{{ url_for('documents.list_documents', aircraft_id=aircraft.id, per_page='all', sensitive=1 if show_sensitive else none, doc_type=filter_doc_type) }}" class="px-2 py-1 text-decoration-none">{{ _('All') }}</a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Pagination controls (top) ────────────────────────────────────────────── #}
+  {% if pagination and pagination.pages > 1 %}
+  <div class="d-flex justify-content-end mb-3">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
+          <a class="page-link" href="{{ url_for('documents.list_documents', aircraft_id=aircraft.id, page=pagination.prev_num, per_page=per_page, sensitive=1 if show_sensitive else none, doc_type=filter_doc_type) if pagination.has_prev else '#' }}">&laquo;</a>
+        </li>
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if p %}
+            <li class="page-item {{ 'active' if p == pagination.page }}">
+              <a class="page-link" href="{{ url_for('documents.list_documents', aircraft_id=aircraft.id, page=p, per_page=per_page, sensitive=1 if show_sensitive else none, doc_type=filter_doc_type) }}">{{ p }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if not pagination.has_next }}">
+          <a class="page-link" href="{{ url_for('documents.list_documents', aircraft_id=aircraft.id, page=pagination.next_num, per_page=per_page, sensitive=1 if show_sensitive else none, doc_type=filter_doc_type) if pagination.has_next else '#' }}">&raquo;</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
   <div class="ac-form-card p-0">
     <div class="table-responsive">
       <table class="table table-hover mb-0 oh-fs-09">
@@ -211,6 +267,31 @@
       </table>
     </div>
   </div>
+
+  {# ── Pagination controls (bottom) ─────────────────────────────────────────── #}
+  {% if pagination and pagination.pages > 1 %}
+  <div class="d-flex justify-content-end mt-3">
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item {{ 'disabled' if not pagination.has_prev }}">
+          <a class="page-link" href="{{ url_for('documents.list_documents', aircraft_id=aircraft.id, page=pagination.prev_num, per_page=per_page, sensitive=1 if show_sensitive else none, doc_type=filter_doc_type) if pagination.has_prev else '#' }}">&laquo;</a>
+        </li>
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+          {% if p %}
+            <li class="page-item {{ 'active' if p == pagination.page }}">
+              <a class="page-link" href="{{ url_for('documents.list_documents', aircraft_id=aircraft.id, page=p, per_page=per_page, sensitive=1 if show_sensitive else none, doc_type=filter_doc_type) }}">{{ p }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">…</span></li>
+          {% endif %}
+        {% endfor %}
+        <li class="page-item {{ 'disabled' if not pagination.has_next }}">
+          <a class="page-link" href="{{ url_for('documents.list_documents', aircraft_id=aircraft.id, page=pagination.next_num, per_page=per_page, sensitive=1 if show_sensitive else none, doc_type=filter_doc_type) if pagination.has_next else '#' }}">&raquo;</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
 
   {% else %}
   <div class="ac-empty">
