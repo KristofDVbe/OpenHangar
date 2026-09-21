@@ -77,6 +77,16 @@ The navbar provides access to:
 The per-aircraft booking calendar (**Reservations**) is reached from the
 dashboard and aircraft pages when rental is enabled in your usage profile.
 
+**On a phone**, the navbar above becomes a bottom tab bar (Dashboard,
+Aircraft, Log a flight, Pilot) plus a menu (hamburger icon, top right) for
+everything else. Pages with several toolbar actions collapse the less
+common ones into a **More** menu, and a page's main action (Upload
+document, Add item, …) follows as a round button in the bottom-right
+corner so it stays within easy thumb reach. Wide tables — a calendar
+grid, an aircraft's documents list — scroll horizontally within their own
+card instead of the whole page; everything else reflows to fit the
+screen.
+
 ---
 
 ## Key user flows
