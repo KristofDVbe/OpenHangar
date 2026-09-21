@@ -62,7 +62,7 @@ from pilots.personal_minimums import (  # pyright: ignore[reportMissingImports]
     get_active_revision,
     recency_breaches,
 )
-from sqlalchemy import func, or_  # pyright: ignore[reportMissingImports]
+from sqlalchemy import case, func, or_  # pyright: ignore[reportMissingImports]
 from utils import (
     accessible_aircraft,
     activity,
@@ -139,6 +139,11 @@ _NATURE_SUGGESTIONS = [
 ]
 
 _HOUR_MILESTONES = [100, 500, 1000, 2000, 5000]
+
+# Aircraft logbook pagination (list_flights) -- same values/convention as
+# the pilot logbook (pilots/routes.py _VALID_PER_PAGE/_DEFAULT_PER_PAGE).
+_FLIGHTS_VALID_PER_PAGE = (10, 20, 50, 100)
+_FLIGHTS_DEFAULT_PER_PAGE = 20
 
 
 def _openaip_key() -> str | None:
@@ -532,24 +537,71 @@ def fleet_flights() -> ResponseReturnValue:
 # ── Airframe logbook ──────────────────────────────────────────────────────────
 
 
+def _flights_total_hours(aircraft_id: int) -> float:
+    """Sum of flight_time (falling back to the flight-counter delta when
+    flight_time itself is unset) across ALL of this aircraft's flights --
+    computed in SQL so the footer total in flights/list.html stays correct
+    once that list is paginated, instead of only summing the current page."""
+    duration = func.coalesce(
+        Flight.flight_time,
+        case(
+            (
+                Flight.flight_time_counter_end.isnot(None)
+                & Flight.flight_time_counter_start.isnot(None),
+                Flight.flight_time_counter_end - Flight.flight_time_counter_start,
+            ),
+            else_=0,
+        ),
+    )
+    total = (
+        db.session.query(func.sum(duration))
+        .filter(Flight.aircraft_id == aircraft_id)
+        .scalar()
+    )
+    return float(total) if total is not None else 0.0
+
+
 @flights_bp.route("/aircraft/<aircraft_ref:aircraft_id>/flights")
 @login_required
 def list_flights(aircraft_id: int) -> ResponseReturnValue:
     ac = _get_aircraft_or_404(aircraft_id)
-    flights = (
-        Flight.query.filter_by(aircraft_id=ac.id)
-        .order_by(
-            Flight.date.desc(),
-            Flight.departure_time.desc().nullslast(),
-            Flight.id.desc(),
+    page = request.args.get("page", 1, type=int)
+    pp_raw = request.args.get("per_page", str(_FLIGHTS_DEFAULT_PER_PAGE))
+    show_all = pp_raw == "all"
+    per_page = (
+        None
+        if show_all
+        else (
+            int(pp_raw)
+            if pp_raw.isdigit() and int(pp_raw) in _FLIGHTS_VALID_PER_PAGE
+            else _FLIGHTS_DEFAULT_PER_PAGE
         )
-        .all()
     )
+
+    query = Flight.query.filter_by(aircraft_id=ac.id).order_by(
+        Flight.date.desc(),
+        Flight.departure_time.desc().nullslast(),
+        Flight.id.desc(),
+    )
+    if show_all:
+        flights = query.all()
+        pagination = None
+        total_count = len(flights)
+    else:
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        flights = pagination.items
+        total_count = pagination.total
+
     milestone_hours = session.pop("milestone_hours", None)
     return render_template(
         "flights/list.html",
         aircraft=ac,
         flights=flights,
+        pagination=pagination,
+        per_page=pp_raw,
+        valid_per_page=_FLIGHTS_VALID_PER_PAGE,
+        total_count=total_count,
+        total_hours=_flights_total_hours(ac.id),
         milestone_hours=milestone_hours,
     )
 
