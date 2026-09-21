@@ -974,7 +974,7 @@
          data-cover-label="{{ _('Cover') }}">
       {% for photo in photos %}
       <div class="photo-thumb position-relative" data-photo-id="{{ photo.id }}" draggable="true">
-        <img src="{{ url_for('aircraft.serve_photo', aircraft_id=aircraft.id, photo_id=photo.id) }}"
+        <img src="{{ url_for('aircraft.serve_photo_thumb', aircraft_id=aircraft.id, photo_id=photo.id) }}"
              alt="{{ photo.original_filename }}"
              class="rounded photo-thumb-img"
              data-bs-toggle="modal" data-bs-target="#photoViewModal"

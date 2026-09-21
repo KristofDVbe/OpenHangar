@@ -386,7 +386,7 @@
           {% set cp = cover_photos.get(ac.id) %}
           {% if cp %}
           <div class="dash-single-ac-cover">
-            <img src="{{ url_for('aircraft.serve_photo', aircraft_id=ac.id, photo_id=cp.id) }}" alt="">
+            <img src="{{ url_for('aircraft.serve_photo_thumb', aircraft_id=ac.id, photo_id=cp.id) }}" alt="">
           </div>
           {% endif %}
           <div class="d-flex align-items-center mb-3">
@@ -470,7 +470,7 @@
  class="text-decoration-none oh-text-inherit d-flex align-items-center">
                     {% set cp = cover_photos.get(ac.id) %}
                     {% if cp %}
-                    <img src="{{ url_for('aircraft.serve_photo', aircraft_id=ac.id, photo_id=cp.id) }}"
+                    <img src="{{ url_for('aircraft.serve_photo_thumb', aircraft_id=ac.id, photo_id=cp.id) }}"
                          alt="" class="dash-ac-thumb">
                     {% endif %}
                     <span class="oh-reg-plate">{{ ac.registration }}</span>
