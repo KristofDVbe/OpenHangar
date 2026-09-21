@@ -19,8 +19,12 @@
     <div class="d-flex gap-2 flex-wrap">
       {% if is_crew %}
       <a href="{{ url_for('snags.new_snag', aircraft_id=aircraft.id) }}"
-         class="btn btn-ac-primary">
+         class="btn btn-ac-primary d-none d-lg-inline-block">
         <i class="bi bi-plus-circle me-1"></i>{{ _('Log a snag') }}
+      </a>
+      <a href="{{ url_for('snags.new_snag', aircraft_id=aircraft.id) }}"
+         class="btn btn-ac-primary oh-fab d-lg-none" aria-label="{{ _('Log a snag') }}">
+        <i class="bi bi-plus-lg"></i>
       </a>
       {% endif %}
       <a href="{{ url_for('aircraft.detail', aircraft_id=aircraft.id) }}"
