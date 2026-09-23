@@ -227,6 +227,16 @@ class TestListDocuments:
         rv = client.get(f"/aircraft/{ac_id}/documents")
         assert rv.status_code in (302, 401)
 
+    def test_list_per_page_all_returns_all_entries(self, app, client):
+        _uid, tid = _create_user_and_tenant(app)
+        ac_id = _add_aircraft(app, tid)
+        for i in range(5):
+            _add_document(app, ac_id, title=f"Doc {i}")
+        _login(app, client)
+        rv = client.get(f"/aircraft/{ac_id}/documents?per_page=all")
+        assert rv.status_code == 200
+        assert b"5 entries (all)" in rv.data
+
 
 class TestListDocumentsDocTypeFilter:
     def _make_pair(self, app, ac_id):

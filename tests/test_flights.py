@@ -316,6 +316,16 @@ class TestFlightList:
         assert resp.status_code == 200
         assert b"EBOS" in resp.data
 
+    def test_list_per_page_all_returns_all_entries(self, app, client):
+        _uid, tid = _create_user_and_tenant(app)
+        acid = _add_aircraft(app, tid)
+        for i in range(5):
+            _add_flight(app, acid, dep="EBOS", arr="EBBR")
+        _login(app, client)
+        resp = client.get(f"/aircraft/{acid}/flights?per_page=all")
+        assert resp.status_code == 200
+        assert b"5 entries (all)" in resp.data
+
 
 # ── Log flight ─────────────────────────────────────────────────────────────────
 
