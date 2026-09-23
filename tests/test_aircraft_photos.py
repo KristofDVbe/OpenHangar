@@ -58,9 +58,18 @@ def _login(app, client, email="photo@example.com"):
     return uid
 
 
-def _add_photo(app, aircraft_id, slug="photo-hangar", reg="OO-PH", order=1):
-    """Create a file in the app's upload dir + a DB row; return photo_id."""
-    fname = f"{order:02d}-abc123.jpg"
+def _add_photo(
+    app, aircraft_id, slug="photo-hangar", reg="OO-PH", order=1, suffix="abc123"
+):
+    """Create a file in the app's upload dir + a DB row; return photo_id.
+
+    suffix defaults to a fixed value like a real upload's random hex suffix
+    would never collide with -- fine when a test only cares about sort_order,
+    but pass distinct suffixes for photos in the same reorder test, or their
+    "NN-" prefix swap collides on Windows (os.rename refuses to overwrite an
+    existing destination there) and one photo silently keeps its old name.
+    """
+    fname = f"{order:02d}-{suffix}.jpg"
     photo_dir = _upload_dir(app) / slug / reg / "photos"
     photo_dir.mkdir(parents=True, exist_ok=True)
     (photo_dir / fname).write_bytes(b"\xff\xd8\xff")
@@ -220,6 +229,71 @@ class TestUploadPhoto:
         with app.app_context():
             assert AircraftPhoto.query.filter_by(aircraft_id=ac_id).count() == 1
 
+    def test_upload_generates_real_thumbnail(self, app, client):
+        """A genuinely decodable image produces an actual resized-JPEG
+        thumbnail file on disk, not just the best-effort failure path."""
+        import PIL.Image
+
+        buf = BytesIO()
+        PIL.Image.new("RGB", (1600, 1200), color=(10, 20, 30)).save(buf, "JPEG")
+        buf.seek(0)
+
+        _uid, tid = _make_user_tenant(app, "rtn@x.com", "rtn-hangar")
+        ac_id = _add_aircraft(app, tid, "OO-TN")
+        _login(app, client, "rtn@x.com")
+
+        rv = client.post(
+            f"/aircraft/{ac_id}/photos/upload",
+            data={"photos": (buf, "real.jpg", "image/jpeg")},
+            content_type="multipart/form-data",
+        )
+        assert rv.status_code == 302
+
+        with app.app_context():
+            from aircraft.routes import (
+                thumb_path_for,  # pyright: ignore[reportMissingImports]
+            )
+
+            photo = AircraftPhoto.query.filter_by(aircraft_id=ac_id).one()
+            thumb_rel = thumb_path_for(photo.filename)
+        thumb_path = _upload_dir(app) / thumb_rel
+        assert thumb_path.exists()
+        with PIL.Image.open(thumb_path) as thumb_img:
+            assert thumb_img.format == "JPEG"
+            assert max(thumb_img.size) <= 800
+
+    def test_thumbnail_generation_failure_is_swallowed(self, app, client, monkeypatch):
+        """A thumbnail-generation error (corrupt upload, decode failure, disk
+        error, ...) must not block the upload itself -- only the thumbnail
+        file is missing afterwards, and serve_photo_thumb falls back."""
+        import PIL.Image
+
+        def boom(*a, **kw):
+            raise OSError("cannot identify image file")
+
+        monkeypatch.setattr(PIL.Image, "open", boom)
+
+        _uid, tid = _make_user_tenant(app, "tgf@x.com", "tgf-hangar")
+        ac_id = _add_aircraft(app, tid, "OO-TG")
+        _login(app, client, "tgf@x.com")
+
+        rv = client.post(
+            f"/aircraft/{ac_id}/photos/upload",
+            data={"photos": (BytesIO(b"\xff\xd8\xff"), "cover.jpg", "image/jpeg")},
+            content_type="multipart/form-data",
+        )
+        assert rv.status_code == 302
+
+        with app.app_context():
+            from aircraft.routes import (
+                thumb_path_for,  # pyright: ignore[reportMissingImports]
+            )
+
+            photos = AircraftPhoto.query.filter_by(aircraft_id=ac_id).all()
+            assert len(photos) == 1
+            thumb_rel = thumb_path_for(photos[0].filename)
+        assert not (_upload_dir(app) / thumb_rel).exists()
+
 
 # ── Serve ─────────────────────────────────────────────────────────────────────
 
@@ -243,6 +317,53 @@ class TestServePhoto:
         _login(app, client, "srv2@x.com")
 
         rv = client.get(f"/aircraft/{ac2_id}/photos/{p_id}/img")
+        assert rv.status_code == 404
+
+
+class TestServePhotoThumb:
+    def test_serve_thumb_returns_thumbnail_when_present(self, app, client):
+        from aircraft.routes import (
+            thumb_path_for,  # pyright: ignore[reportMissingImports]
+        )
+
+        _uid, tid = _make_user_tenant(app, "sth@x.com", "sth-hangar")
+        ac_id = _add_aircraft(app, tid, "OO-TH")
+        p_id = _add_photo(app, ac_id, "sth-hangar", "OO-TH")
+        _login(app, client, "sth@x.com")
+
+        with app.app_context():
+            photo = db.session.get(AircraftPhoto, p_id)
+            thumb_rel = thumb_path_for(photo.filename)
+        thumb_path = _upload_dir(app) / thumb_rel
+        thumb_path.parent.mkdir(parents=True, exist_ok=True)
+        # Distinguishable from the original's b"\xff\xd8\xff" so the assertion
+        # below can only pass if the thumbnail (not a fallback) was served.
+        thumb_path.write_bytes(b"\xff\xd8\xff\xaa\xaa")
+
+        rv = client.get(f"/aircraft/{ac_id}/photos/{p_id}/thumb")
+        assert rv.status_code == 200
+        assert rv.data == b"\xff\xd8\xff\xaa\xaa"
+
+    def test_serve_thumb_falls_back_to_original_when_missing(self, app, client):
+        """A photo uploaded before thumbnailing existed (or whose generation
+        failed) has no thumbnail file -- the route must still serve something."""
+        _uid, tid = _make_user_tenant(app, "stf@x.com", "stf-hangar")
+        ac_id = _add_aircraft(app, tid, "OO-TF")
+        p_id = _add_photo(app, ac_id, "stf-hangar", "OO-TF")
+        _login(app, client, "stf@x.com")
+
+        rv = client.get(f"/aircraft/{ac_id}/photos/{p_id}/thumb")
+        assert rv.status_code == 200
+        assert rv.data[:3] == b"\xff\xd8\xff"
+
+    def test_serve_thumb_wrong_aircraft_404(self, app, client):
+        _uid, tid = _make_user_tenant(app, "st4@x.com", "st4-hangar")
+        ac1_id = _add_aircraft(app, tid, "OO-T1")
+        ac2_id = _add_aircraft(app, tid, "OO-T2")
+        p_id = _add_photo(app, ac1_id, "st4-hangar", "OO-T1")
+        _login(app, client, "st4@x.com")
+
+        rv = client.get(f"/aircraft/{ac2_id}/photos/{p_id}/thumb")
         assert rv.status_code == 404
 
 
@@ -381,6 +502,82 @@ class TestReorderPhotos:
             p1 = db.session.get(AircraftPhoto, p1_id)
             assert p1.sort_order == 2
             assert p1.filename == old_p1_filename
+
+    def test_reorder_renames_thumbnail_alongside_original(self, app, client):
+        """A photo's thumbnail file must keep the same numeric prefix as its
+        (renumbered) original, or thumb_path_for(new filename) stops finding
+        it and the photo silently falls back to full-size until re-uploaded."""
+        from aircraft.routes import (
+            thumb_path_for,  # pyright: ignore[reportMissingImports]
+        )
+
+        _uid, tid = _make_user_tenant(app, "rth@x.com", "rth-hangar")
+        ac_id = _add_aircraft(app, tid, "OO-RH")
+        p1_id = _add_photo(app, ac_id, "rth-hangar", "OO-RH", order=1, suffix="p1abc")
+        p2_id = _add_photo(app, ac_id, "rth-hangar", "OO-RH", order=2, suffix="p2xyz")
+        _login(app, client, "rth@x.com")
+
+        with app.app_context():
+            p1_filename = db.session.get(AircraftPhoto, p1_id).filename
+        old_thumb = _upload_dir(app) / thumb_path_for(p1_filename)
+        old_thumb.parent.mkdir(parents=True, exist_ok=True)
+        old_thumb.write_bytes(b"\xff\xd8\xff")
+
+        client.post(
+            f"/aircraft/{ac_id}/photos/reorder",
+            data={"photo_order[]": [str(p2_id), str(p1_id)]},
+        )
+
+        with app.app_context():
+            p1 = db.session.get(AircraftPhoto, p1_id)
+            assert p1.sort_order == 2
+        new_thumb = _upload_dir(app) / thumb_path_for(p1.filename)
+        assert new_thumb.exists()
+        assert not old_thumb.exists()
+
+    def test_reorder_thumbnail_rename_oserror_is_swallowed(
+        self, app, client, monkeypatch
+    ):
+        """If renaming the thumbnail fails during renumber (disk error,
+        permissions, ...), that failure must not surface as a 500 -- the
+        original file's own rename still succeeds independently."""
+        from aircraft.routes import (
+            thumb_path_for,  # pyright: ignore[reportMissingImports]
+        )
+
+        _uid, tid = _make_user_tenant(app, "rte@x.com", "rte-hangar")
+        ac_id = _add_aircraft(app, tid, "OO-RE")
+        p1_id = _add_photo(app, ac_id, "rte-hangar", "OO-RE", order=1, suffix="p1abc")
+        p2_id = _add_photo(app, ac_id, "rte-hangar", "OO-RE", order=2, suffix="p2xyz")
+        _login(app, client, "rte@x.com")
+
+        with app.app_context():
+            p1_filename = db.session.get(AircraftPhoto, p1_id).filename
+        thumb = _upload_dir(app) / thumb_path_for(p1_filename)
+        thumb.parent.mkdir(parents=True, exist_ok=True)
+        thumb.write_bytes(b"\xff\xd8\xff")
+
+        import os as _os
+
+        real_rename = _os.rename
+
+        def flaky_rename(src, dst):
+            if "thumbs" in str(src).replace("\\", "/"):
+                raise OSError("busy")
+            return real_rename(src, dst)
+
+        monkeypatch.setattr("os.rename", flaky_rename)
+
+        rv = client.post(
+            f"/aircraft/{ac_id}/photos/reorder",
+            data={"photo_order[]": [str(p2_id), str(p1_id)]},
+        )
+        assert rv.status_code == 204
+
+        with app.app_context():
+            p1 = db.session.get(AircraftPhoto, p1_id)
+            assert p1.sort_order == 2
+            assert p1.filename.split("/")[-1].startswith("02-")
 
 
 # ── _trash_photo_file edge cases ──────────────────────────────────────────────
