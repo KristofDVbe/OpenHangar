@@ -52,6 +52,7 @@ _SKIP_GET_ENDPOINTS = {
     "auth.logout",  # session-destructive — tested in TestEndOfSession
     "set_language",  # session-mutating — tested in TestEndOfSession
     "aircraft.serve_photo",  # binary JPEG — tested in TestKnownBehaviors
+    "aircraft.serve_photo_thumb",  # binary JPEG — tested in TestKnownBehaviors
     "share.token_qr",  # binary PNG — tested in TestKnownBehaviors
     "not_yet_implemented",  # returns 501 by design — tested in TestKnownBehaviors
     "health_ready",  # returns 404 for non-loopback callers by design (loopback-only probe)
@@ -345,6 +346,18 @@ class TestKnownBehaviors:
                 "no photo in seed DB (dev_seed_docs not copied or /data/uploads not writable)"
             )
         url = f"/aircraft/{seed['ac_flt']}/photos/{seed['photo_id']}/img"
+        resp = logged_in_page.request.get(live_server_url + url)
+        assert resp.status == 200
+        assert resp.headers.get("content-type", "").startswith("image/")
+
+    def test_serve_photo_thumb_returns_jpeg(
+        self, logged_in_page, live_server_url, seed
+    ):
+        if seed["photo_id"] is None:
+            pytest.skip(
+                "no photo in seed DB (dev_seed_docs not copied or /data/uploads not writable)"
+            )
+        url = f"/aircraft/{seed['ac_flt']}/photos/{seed['photo_id']}/thumb"
         resp = logged_in_page.request.get(live_server_url + url)
         assert resp.status == 200
         assert resp.headers.get("content-type", "").startswith("image/")
